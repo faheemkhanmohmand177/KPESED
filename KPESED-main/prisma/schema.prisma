@@ -1,0 +1,595 @@
+// Prisma Schema for KPESE HRMIS — maps to the snake_case SQL schema in Supabase
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  password     String
+  fullName     String   @map("full_name")
+  email        String?
+  phone        String?
+  role         String   @default("school admin")
+  emisCode     String?  @map("emis_code")
+  schoolName   String?  @map("school_name")
+  district     String?
+  avatarUrl    String?  @map("avatar_url")
+  isActive     Boolean  @default(true) @map("is_active")
+  lastLogin    DateTime? @map("last_login")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  employees         Employee[]
+  attendancesMarked Attendance[]
+  notifications     Notification[]
+  portalRecords     PortalRecord[]
+  assetsCreated     Asset[]
+
+  @@map("users")
+}
+
+model PortalRecord {
+  id          String   @id @default(uuid())
+  moduleKey   String   @map("module_key")
+  title       String?
+  data        Json
+  createdById String?  @map("created_by")
+  createdBy   User?    @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([moduleKey])
+  @@map("portal_records")
+}
+
+model Asset {
+  id            String   @id @default(uuid())
+  schoolId      String?  @map("school_id")
+  school        School?  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  emisCode      String   @map("emis_code")
+  schoolName    String   @map("school_name")
+  district      String?
+  schoolGender  String?  @map("school_gender")
+  assetCode     String?  @map("asset_code")
+  assetName     String   @map("asset_name")
+  assetType     String   @map("asset_type")
+  category      String?
+  donatedBy     String?  @map("donated_by")
+  purchaseDate  DateTime @default(now()) @map("purchase_date")
+  quantity      Int      @default(1)
+  status        String   @default("FUNCTIONAL")
+  availability  String   @default("AVAILABLE")
+  createdById   String?  @map("created_by")
+  createdBy     User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([emisCode])
+  @@index([schoolId])
+  @@index([assetType, category])
+  @@map("assets")
+}
+
+model District {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  code      String   @unique
+  division  String?
+  region    String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  employees     Employee[]
+  schools       School[]
+  unionCouncils UnionCouncil[]
+  tehsils       Tehsil[]
+
+  @@map("districts")
+}
+
+model Tehsil {
+  id         String   @id @default(uuid())
+  name       String   @unique
+  districtId String?  @map("district_id")
+  district   District? @relation(fields: [districtId], references: [id])
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  employees     Employee[]
+  schools       School[]
+  unionCouncils UnionCouncil[]
+
+  @@map("tehsils")
+}
+
+model UnionCouncil {
+  id         String   @id @default(uuid())
+  name       String
+  tehsilId   String?  @map("tehsil_id")
+  tehsil     Tehsil?  @relation(fields: [tehsilId], references: [id])
+  districtId String?  @map("district_id")
+  district   District? @relation(fields: [districtId], references: [id])
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  employees Employee[]
+
+  @@map("union_councils")
+}
+
+model School {
+  id              String   @id @default(uuid())
+  emisCode        String   @unique @map("emis_code")
+  name            String
+  schoolType      String?  @map("school_type")
+  gender          String?
+  ddoCode         String?  @map("ddo_code")
+  districtId      String?  @map("district_id")
+  district        District? @relation(fields: [districtId], references: [id])
+  tehsilId        String?  @map("tehsil_id")
+  tehsil          Tehsil?  @relation(fields: [tehsilId], references: [id])
+  address         String?
+  latitude        Float?
+  longitude       Float?
+  establishedYear Int?     @map("established_year")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  employees Employee[]
+  assets    Asset[]
+
+  @@map("schools")
+}
+
+model Designation {
+  id        String   @id @default(uuid())
+  title     String   @unique
+  bps       Int
+  category  String?
+  level     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  employees Employee[]
+
+  @@map("designations")
+}
+
+model Cadre {
+  id          String   @id @default(uuid())
+  group       String
+  designation String?
+  bps         Int?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+}
+
+model Employee {
+  id                             String   @id @default(uuid())
+  empId                          String   @unique @map("emp_id")
+  name                           String
+  fatherOrHusbandName            String?  @map("father_or_husband_name")
+  relationType                   String?  @map("relation_type")
+  gender                         String?
+  cnic                           String?
+  personnelNo                    String?  @map("personnel_no")
+  emisCode                       String?  @map("emis_code")
+  schoolId                       String?  @map("school_id")
+  school                         School?  @relation(fields: [schoolId], references: [id])
+  schoolName                     String?  @map("school_name")
+  schoolGender                   String?  @map("school_gender")
+  ddoCode                        String?  @map("ddo_code")
+  districtId                     String?  @map("district_id")
+  district                       District? @relation(fields: [districtId], references: [id])
+  districtName                   String?  @map("district_name")
+  tehsilId                       String?  @map("tehsil_id")
+  tehsil                         Tehsil?  @relation(fields: [tehsilId], references: [id])
+  tehsilName                     String?  @map("tehsil_name")
+  unionCouncilId                 String?  @map("union_council_id")
+  unionCouncil                   UnionCouncil? @relation(fields: [unionCouncilId], references: [id])
+  ucName                         String?  @map("uc_name")
+  domicile                       String?
+  country                        String?  @default("PAKISTAN")
+  province                       String?  @default("KHYBER PAKHTUNKHWA")
+  division                       String?
+  dateOfBirth                    DateTime? @map("date_of_birth")
+  phone                          String?
+  maritalStatus                  String?  @map("marital_status")
+  motherTongue                   String?  @map("mother_tongue")
+  gpFund                         String?  @map("gp_fund")
+  email                          String?
+  spouseEmploymentStatus         String?  @map("spouse_employment_status")
+  religion                       String?  @default("ISLAM")
+  initialRecruitmentInESED       String?  @map("initial_recruitment_in_esed")
+  esedAppointmentQuota           String?  @map("esed_appointment_quota")
+  xCoordinate                    Float?   @map("x_coordinate")
+  currentAddress                 String?  @map("current_address")
+  dateOfEntryIntoGovtService     DateTime? @map("date_of_entry_into_govt_service")
+  mobileSms                      String?  @map("mobile_sms")
+  bloodGroup                     String?  @map("blood_group")
+  disability                     String?
+  ntnNo                          String?  @map("ntn_no")
+  passportNo                     String?  @map("passport_no")
+  isSpouseWorkingInESED          String?  @map("is_spouse_working_in_esed")
+  chronicDisease                 String?  @map("chronic_disease")
+  initialRecruitment1stOrderDate DateTime? @map("initial_recruitment_1st_order_date")
+  dualNationality                String?  @default("NO") @map("dual_nationality")
+  yCoordinate                    Float?   @map("y_coordinate")
+  permanentAddress               String?  @map("permanent_address")
+  covidVaccinated                String?  @map("covid_vaccinated")
+  covidReason                    String?  @map("covid_reason")
+  covidMessage                   String?  @map("covid_message")
+  placementType                  String?  @map("placement_type")
+  postingType                    String?  @map("posting_type")
+  externalPlacement              String?  @map("external_placement")
+  workingDesignation             String?  @map("working_designation")
+  designationId                  String?  @map("designation_id")
+  designation                    Designation? @relation(fields: [designationId], references: [id])
+  workingBPS                     Int?     @map("working_bps")
+  currentPostingDate             DateTime? @map("current_posting_date")
+  tenureYears                    Int?     @map("tenure_years")
+  tenureMonths                   Int?     @map("tenure_months")
+  tenureDays                     Int?     @map("tenure_days")
+  isDeputation                   String?  @default("NO") @map("is_deputation")
+  level                          String?
+  cadreGroup                     String?  @map("cadre_group")
+  cadreDesignation               String?  @map("cadre_designation")
+  status                         String?
+  jobType                        String?  @map("job_type")
+  photoUrl                       String?  @map("photo_url")
+  minority                       Boolean  @default(false)
+  createdById                    String?  @map("created_by")
+  createdBy                      User?    @relation(fields: [createdById], references: [id])
+  createdAt                      DateTime @default(now()) @map("created_at")
+  updatedAt                      DateTime @updatedAt @map("updated_at")
+
+  serviceRecords  ServiceRecord[]
+  postings        PostingTransfer[]
+  bpsHistory      BpsHistory[]
+  jobTypeHistory  JobTypeHistory[]
+  cadreHistory    CadreHistory[]
+  qualifications  Qualification[]
+  familyMembers   FamilyMember[]
+  bankDetails     BankDetail[]
+  leavesDetail    LeavesDetail[]
+  trainings       TrainingDetail[]
+  documents       EmployeeDocument[]
+  attendances     Attendance[]
+
+  @@map("employees")
+}
+
+model ServiceRecord {
+  id                     String   @id @default(uuid())
+  employeeId             String   @map("employee_id")
+  employee               Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  recordType             String?  @map("record_type")
+  fromDesignation        String?  @map("from_designation")
+  toDesignation          String?  @map("to_designation")
+  fromBPS                Int?     @map("from_bps")
+  toBPS                  Int?     @map("to_bps")
+  effectiveDate          DateTime @map("effective_date")
+  endDate                DateTime? @map("end_date")
+  status                 String?
+  remarks                String?
+  notificationDetail     String?  @map("notification_detail")
+  notificationTitle      String?  @map("notification_title")
+  retirementNotification String?  @map("retirement_notification")
+  createdBy              String?  @map("created_by")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  @@map("service_records")
+}
+
+model PostingTransfer {
+  id                     String   @id @default(uuid())
+  employeeId             String   @map("employee_id")
+  employee               Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  ddoCode                String?  @map("ddo_code")
+  schoolName             String?  @map("school_name")
+  emisCode               String?  @map("emis_code")
+  designation            String?
+  bps                    Int?
+  fromDate               DateTime? @map("from_date")
+  toDate                 DateTime? @map("to_date")
+  status                 String?
+  placementType          String?  @map("placement_type")
+  postingType            String?  @map("posting_type")
+  isDeputation           String?  @map("is_deputation")
+  notificationDetail     String?  @map("notification_detail")
+  notificationTitle      String?  @map("notification_title")
+  retirementNotification String?  @map("retirement_notification")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  @@map("posting_transfers")
+}
+
+model BpsHistory {
+  id                 String   @id @default(uuid())
+  employeeId         String   @map("employee_id")
+  employee           Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  bps                Int
+  fromDate           DateTime? @map("from_date")
+  toDate             DateTime? @map("to_date")
+  status             String?
+  remarks            String?
+  notificationDetail String?  @map("notification_detail")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("bps_history")
+}
+
+model JobTypeHistory {
+  id                 String   @id @default(uuid())
+  employeeId         String   @map("employee_id")
+  employee           Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  jobType            String   @map("job_type")
+  fromDate           DateTime? @map("from_date")
+  toDate             DateTime? @map("to_date")
+  status             String?
+  remarks            String?
+  notificationDetail String?  @map("notification_detail")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("job_type_history")
+}
+
+model CadreHistory {
+  id              String   @id @default(uuid())
+  employeeId      String   @map("employee_id")
+  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  cadreGroup      String   @map("cadre_group")
+  designation     String?
+  bps             Int?
+  fromDate        DateTime? @map("from_date")
+  toDate          DateTime? @map("to_date")
+  status          String?
+  seniorityNumber String?  @map("seniority_number")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("cadre_history")
+}
+
+model Qualification {
+  id                String   @id @default(uuid())
+  employeeId        String   @map("employee_id")
+  employee          Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  category          String
+  specialty         String?
+  collegeUniversity String?  @map("college_university")
+  board             String?
+  totalMarks        Float?   @map("total_marks")
+  obtainedMarks     Float?   @map("obtained_marks")
+  percentage        Float?
+  regularPrivate    String?  @map("regular_private")
+  sessionYear       String?  @map("session_year")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("qualifications")
+}
+
+model FamilyMember {
+  id             String   @id @default(uuid())
+  employeeId     String   @map("employee_id")
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  dependentName  String   @map("dependent_name")
+  relationship   String?
+  gender         String?
+  dateOfBirth    DateTime? @map("date_of_birth")
+  personnelNo    String?  @map("personnel_no")
+  department     String?
+  designationBPS String?  @map("designation_bps")
+  isDependent    String?  @map("is_dependent")
+  disability     String?
+  cnicOrFormB    String?  @map("cnic_or_form_b")
+  nextOfKin      String?  @map("next_of_kin")
+  kinSignature   String?  @map("kin_signature")
+  kinAddress     String?  @map("kin_address")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("family_members")
+}
+
+model BankDetail {
+  id            String   @id @default(uuid())
+  employeeId    String   @map("employee_id")
+  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  accountTitle  String?  @map("account_title")
+  bankName      String?  @map("bank_name")
+  bankCode      String?  @map("bank_code")
+  accountNo     String?  @map("account_no")
+  iban          String?
+  monthlySalary Float?   @map("monthly_salary")
+  address       String?
+  district      String?
+  forPensioner  String?  @map("for_pensioner")
+  status        String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("bank_details")
+}
+
+model LeavesDetail {
+  id         String   @id @default(uuid())
+  employeeId String   @map("employee_id")
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveType  String?  @map("leave_type")
+  fromDate   DateTime? @map("from_date")
+  toDate     DateTime? @map("to_date")
+  days       Float?
+  reason     String?
+  status     String?
+  remarks    String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("leaves_details")
+}
+
+model TrainingDetail {
+  id            String   @id @default(uuid())
+  employeeId    String   @map("employee_id")
+  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  trainingTitle String?  @map("training_title")
+  institute     String?
+  fromDate      DateTime? @map("from_date")
+  toDate        DateTime? @map("to_date")
+  duration      String?
+  status        String?
+  remarks       String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("training_details")
+}
+
+model EmployeeDocument {
+  id         String   @id @default(uuid())
+  employeeId String   @map("employee_id")
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  docType    String?  @map("doc_type")
+  docName    String?  @map("doc_name")
+  fileUrl    String?  @map("file_url")
+  uploadedAt DateTime? @map("uploaded_at")
+  remarks    String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("employee_documents")
+}
+
+model Attendance {
+  id             String   @id @default(uuid())
+  employeeId     String   @map("employee_id")
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  attendanceDate DateTime @map("attendance_date")
+  status         String   @default("present")
+  remarks        String?
+  markedById     String?  @map("marked_by")
+  markedBy       User?    @relation(fields: [markedById], references: [id])
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@unique([employeeId, attendanceDate])
+  @@map("attendance")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("info")
+  category  String?
+  isRead    Boolean  @default(false) @map("is_read")
+  link      String?
+  metadata  String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("notifications")
+}
+
+model StudentProfile {
+  id              String   @id @default(uuid())
+  emisCode        String   @map("emis_code")
+  studentId       String   @map("student_id")
+  studentName     String   @map("student_name")
+  fatherName      String?  @map("father_name")
+  gender          String?
+  dateOfBirth     DateTime? @map("date_of_birth")
+  bForm           String?  @map("b_form")
+  admissionNo     String?  @map("admission_no")
+  admissionDate   DateTime? @map("admission_date")
+  className       String?  @map("class_name")
+  section         String?
+  shift           String?
+  session         String?
+  status          String?  @default("ACTIVE")
+  religion        String?
+  motherTongue    String?  @map("mother_tongue")
+  disability      String?
+  orphan          String?
+  minority        String?
+  address         String?
+  village         String?
+  guardianName    String?  @map("guardian_name")
+  guardianCnic    String?  @map("guardian_cnic")
+  guardianPhone   String?  @map("guardian_phone")
+  district        String?
+  tehsil          String?
+  unionCouncil    String?  @map("union_council")
+  schoolName      String?  @map("school_name")
+  previousSchool  String?  @map("previous_school")
+  medium          String?
+  transferStatus  String?  @map("transfer_status")
+  result          String?
+  remarks         String?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  @@unique([emisCode, studentId])
+  @@index([emisCode])
+  @@index([emisCode, className])
+  @@map("student_profiles")
+}
+
+model EnrolmentCampaignTarget {
+  id          String   @id @default(uuid())
+  emisCode    String   @map("emis_code")
+  session     String
+  className   String   @map("class_name")
+  target      Int      @default(0)
+  achieved    Int      @default(0)
+  remarks     String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  @@unique([emisCode, session, className])
+  @@index([emisCode])
+  @@map("enrolment_campaign_targets")
+}
+
+model DailyStudentEnrolment {
+  id          String   @id @default(uuid())
+  emisCode    String   @map("emis_code")
+  enrolmentDate DateTime @map("enrolment_date")
+  className   String   @map("class_name")
+  male        Int      @default(0)
+  female      Int      @default(0)
+  transgender Int     @default(0)
+  total       Int      @default(0)
+  remarks     String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  @@unique([emisCode, enrolmentDate, className])
+  @@index([emisCode])
+  @@map("daily_student_enrolment")
+}
+
+model StudentClassUpdate {
+  id          String   @id @default(uuid())
+  emisCode    String   @map("emis_code")
+  studentId   String   @map("student_id")
+  fromClass   String?  @map("from_class")
+  toClass     String   @map("to_class")
+  effectiveDate DateTime @map("effective_date")
+  remarks     String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  @@index([emisCode])
+  @@map("student_class_updates")
+}
