@@ -414,19 +414,20 @@ select.apex-select.apex-select--inline {
 
 /* Custom scrollbar */
 .hrmis-scroll::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 5px;
+  height: 5px;
 }
 .hrmis-scroll::-webkit-scrollbar-track {
-  background: #f0f0f0;
+  background: transparent;
 }
 .hrmis-scroll::-webkit-scrollbar-thumb {
-  background: #b0b0b0;
-  border-radius: 4px;
+  background: #a7a7a7;
+  border-radius: 3px;
 }
 .hrmis-scroll::-webkit-scrollbar-thumb:hover {
-  background: #909090;
+  background: #7f7f7f;
 }
+.hrmis-scroll { scrollbar-width: thin; scrollbar-color: #a7a7a7 transparent; }
 
 /* Login background — uses the real HR-Banner.jpeg */
 .hrmis-login-bg {
@@ -455,6 +456,7 @@ select.apex-select.apex-select--inline {
 .t-Header {
   height: var(--apex-header-h);
   padding-top: env(safe-area-inset-top);
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
 }
 @media (min-width: 1024px) {
   :root {
@@ -469,15 +471,20 @@ select.apex-select.apex-select--inline {
 .tree-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 10px;
-  min-height: 46px;
+  gap: 6px;
+  padding: 3px 10px;
+  min-height: 43px;
   cursor: pointer;
-  font-size: 16.5px;
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  font-size: 16px;
+  letter-spacing: 0.1px;
   color: #f0f0f0;
   border-radius: 0;
   user-select: none;
   transition: background-color 0.15s ease, color 0.15s ease;
+}
+.tree-item .tree-caret {
+  color: #ffffff;
 }
 .tree-item button {
   white-space: nowrap;
@@ -496,7 +503,7 @@ select.apex-select.apex-select--inline {
 .tree-item--active {
   background: #1565c0;
   color: #ffffff;
-  font-weight: 600;
+  font-weight: 400;
 }
 .tree-children {
   padding-left: 0;
@@ -612,7 +619,7 @@ select.apex-select.apex-select--inline {
   }
   .tree-item .tree-caret {
     font-size: 15px;
-    color: rgba(255, 255, 255, 0.8);
+    color: #ffffff;
     letter-spacing: 1px;
   }
   .tree-item:hover {

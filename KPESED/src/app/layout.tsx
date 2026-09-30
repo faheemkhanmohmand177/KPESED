@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ResponsiveToaster } from "@/components/hrmis/responsive-toaster";
+import { PwaRegister } from "@/components/hrmis/pwa-register";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -77,6 +78,7 @@ export default function RootLayout({
             <p>JavaScript is required to use the secure portal. Return to this page with JavaScript enabled to sign in.</p>
           </main>
         </noscript>
+        <PwaRegister />
         {children}
         <ResponsiveToaster />
       </body>

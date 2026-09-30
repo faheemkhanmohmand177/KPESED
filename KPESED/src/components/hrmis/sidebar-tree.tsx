@@ -18,7 +18,7 @@ interface SidebarTreeProps {
  * Both variants are always rendered and switched with CSS, so there is no
  * layout flash on first paint:
  *   - <lg  : off-canvas drawer, fixed under the topbar, slides in from the left
- *   - >=lg : static 300px column (collapses to 0 width, like the real site)
+ *   - >=lg : static 293px column (collapses to 0 width, like the real site)
  *
  * Renders all 12 top-level items from NAV_TREE; HR MIS expands to 4 sub-items.
  */
@@ -103,7 +103,7 @@ export function SidebarTree({ activeModule, onNavigate, expanded }: SidebarTreeP
         aria-label="Sidebar navigation"
         className={cn(
           'hrmis-scroll hidden shrink-0 overflow-y-auto overflow-x-hidden border-r border-[#252c2f] bg-[#2f383c] text-[#f0f0f0] transition-[width] duration-200 lg:block',
-          expanded ? 'w-[300px]' : 'w-0 border-r-0',
+          expanded ? 'w-[293px]' : 'w-0 border-r-0',
         )}
       >
         {expanded ? tree : null}

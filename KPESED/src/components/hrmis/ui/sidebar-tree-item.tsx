@@ -54,8 +54,9 @@ export function SidebarTreeItem({
       {icon === 'book' ? (
         <BookOpen className="tree-caret h-[18px] w-[18px] shrink-0" aria-hidden />
       ) : (
-        <span className="tree-caret text-[15px] text-white/75" aria-hidden>
-          »
+        <span className="tree-caret flex shrink-0 items-center text-white" aria-hidden>
+          <ChevronRight className="h-4 w-4" strokeWidth={3} />
+          <ChevronRight className="-ml-1 h-4 w-4" strokeWidth={3} />
         </span>
       )}
 
@@ -69,7 +70,7 @@ export function SidebarTreeItem({
         )}
         title={label}
       >
-        <span className={cn(level === 0 && 'font-medium')}>{label}</span>
+        <span>{label}</span>
         {pending ? <span className="sr-only"> (additional options)</span> : null}
       </button>
 

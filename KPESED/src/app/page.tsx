@@ -138,17 +138,17 @@ function PageInner() {
         return <TeacherAttendancePage />
       case 'students-search':
       case 'students-profiles':
-        return <StudentsMisPage module="students-profiles" title="Students Profiles" onNavigate={navigate} />
+        return <StudentsMisPage module="students-profiles" title="Students Profiles" onNavigate={navigate} user={activeUser} />
       case 'student-data-uploading':
-        return <StudentsMisPage module="student-data-uploading" title="Student Data Uploading" onNavigate={navigate} />
+        return <StudentsMisPage module="student-data-uploading" title="Student Data Uploading" onNavigate={navigate} user={activeUser} />
       case 'target-student-enrolment':
       case 'enrolment-campaign-target':
-        return <StudentsMisPage module="enrolment-campaign-target" title="Enrolment Campaign Target" onNavigate={navigate} />
+        return <StudentsMisPage module="enrolment-campaign-target" title="Enrolment Campaign Target" onNavigate={navigate} user={activeUser} />
       case 'daily-students-enrolment':
-        return <StudentsMisPage module="daily-students-enrolment" title="Daily Students Enrolment" onNavigate={navigate} />
+        return <StudentsMisPage module="daily-students-enrolment" title="Daily Students Enrolment" onNavigate={navigate} user={activeUser} />
       case 'students-class_update':
       case 'students-class-update':
-        return <StudentsMisPage module="students-class-update" title="Students Class Update" onNavigate={navigate} />
+        return <StudentsMisPage module="students-class-update" title="Students Class Update" onNavigate={navigate} user={activeUser} />
       case 'student-attendence':
         return <StudentAttendancePage onNavigate={navigate} />
       case 'student-class-promotion':
@@ -172,7 +172,7 @@ function PageInner() {
         // Modules already implemented keep their own switch cases above; a
         // legacy generic shell remains as a final fallback.
         const realConfig = REAL_MODULES[module_]
-        if (realConfig) return <RealModulePage moduleKey={module_} config={realConfig} onNavigate={(m) => navigate(m)} />
+        if (realConfig) return <RealModulePage moduleKey={module_} config={realConfig} onNavigate={(m) => navigate(m)} user={activeUser} />
         return <ModulePage module={module_} onNavigate={(m) => navigate(m)} />
       }
     }

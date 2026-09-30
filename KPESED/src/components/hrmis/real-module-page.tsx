@@ -18,6 +18,8 @@ interface RealModulePageProps {
   moduleKey: string
   config: RealModuleConfig
   onNavigate: (m: string) => void
+  /** Authenticated session user — prefills readonly School / Office fields. */
+  user?: { schoolName?: string | null; district?: string | null; emisCode?: string | null; fullName?: string } | null
 }
 
 /**
@@ -27,7 +29,7 @@ interface RealModulePageProps {
  * edit, delete, CSV download, saved-report select, rows-per-page, functional
  * filters and auto-seeded editable grids (Tree Survey, PTC headwise balance).
  */
-export function RealModulePage({ moduleKey, config }: RealModulePageProps) {
+export function RealModulePage({ moduleKey, config, user }: RealModulePageProps) {
   const meta = MODULES[moduleKey]
   const title = config.title || meta?.title || moduleKey
   const formDef = MODULE_FORMS[moduleKey]
@@ -122,7 +124,13 @@ export function RealModulePage({ moduleKey, config }: RealModulePageProps) {
 
   function openAddForm() {
     const init: Record<string, string> = {}
-    for (const f of formDef?.fields || []) init[f.key] = f.defaultValue ?? ''
+    for (const f of formDef?.fields || []) {
+      if (f.type === 'static' && (f.key === 'School' || f.key === 'Office/School Name')) {
+        init[f.key] = user?.schoolName || ''
+        continue
+      }
+      init[f.key] = f.defaultValue ?? ''
+    }
     setFormValues(init)
     setEditTarget(null)
     setShowAdd(true)
@@ -445,7 +453,7 @@ export function RealModulePage({ moduleKey, config }: RealModulePageProps) {
                 onKeyDown={(e) => { if (e.key === 'Enter') setAppliedSearch(search) }}
                 className="apex-input flex-1"
               />
-              <button type="button" className="apex-btn apex-btn--join-l" onClick={() => { setAppliedSearch(search); }}><Search className="h-3.5 w-3.5" />Search</button>
+              <button type="button" className="apex-btn apex-btn--join-l" onClick={() => { setAppliedSearch(search); }}><Search className="h-3.5 w-3.5" />{config.searchLabel || 'Search'}</button>
             </div>
             {(config.savedReports || []).length > 0 && (
               <select aria-label="Saved reports" className="apex-select apex-select--inline min-w-[150px]">{(config.savedReports || []).map((r) => <option key={r}>{r}</option>)}</select>
@@ -527,12 +535,14 @@ function FormInput({ field, value, onChange }: { field: FormFieldDef; value: str
     </label>
   )
   if (field.type === 'select') {
+    const rawOptions = field.options || []
+    const hasPlaceholder = rawOptions.length > 0 && rawOptions[0].startsWith('--')
     return (
       <div className={field.full ? 'sm:col-span-2 lg:col-span-3' : ''}>
         {label}
         <select id={id} className="apex-select w-full" value={value} onChange={(e) => onChange(e.target.value)} required={field.required}>
-          <option value="">-- {field.label} --</option>
-          {(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}
+          {!hasPlaceholder && <option value="">-- {field.label} --</option>}
+          {rawOptions.map((o) => <option key={o} value={o.startsWith('--') ? '' : o}>{o}</option>)}
         </select>
       </div>
     )
@@ -559,11 +569,38 @@ function FormInput({ field, value, onChange }: { field: FormFieldDef; value: str
       </div>
     )
   }
+  // Readonly static display (e.g. "School — GMS …" on the live Content form).
+  if (field.type === 'static') {
+    return (
+      <div className={field.full ? 'sm:col-span-2 lg:col-span-3' : ''}>
+        {label}
+        <div className="mt-1 rounded border border-[#e5e5e5] bg-[#fafafa] px-2 py-1.5 text-sm text-gray-700">{value || '—'}</div>
+      </div>
+    )
+  }
+  // Inline separator text (the live form's standalone red "OR" paragraph).
+  if (field.type === 'note') {
+    return <p className="text-center text-sm font-semibold text-[#e0301e] sm:col-span-2 lg:col-span-3">{field.label}</p>
+  }
+  // File upload (e.g. "Uploade Media (Picture/Videos) - 10mb max").
+  if (field.type === 'file') {
+    return (
+      <div className={field.full ? 'sm:col-span-2 lg:col-span-3' : ''}>
+        {label}
+        <input
+          id={id} type="file" className="apex-input w-full"
+          onChange={(e) => onChange(e.target.files?.[0]?.name || '')}
+        />
+        {field.hint && <p className="mt-1 text-xs text-gray-500">{field.hint}</p>}
+      </div>
+    )
+  }
   const inputType = field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : field.type === 'url' ? 'url' : 'text'
   return (
     <div className={field.full ? 'sm:col-span-2 lg:col-span-3' : ''}>
       {label}
       <input id={id} type={inputType} className="apex-input w-full" value={value} onChange={(e) => onChange(e.target.value)} required={field.required} />
+      {field.hint && <p className="mt-1 text-xs text-gray-500">{field.hint}</p>}
     </div>
   )
 }

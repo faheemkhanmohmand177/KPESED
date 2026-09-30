@@ -25,22 +25,30 @@ export function Topbar({ user, sidebarOpen, onToggleSidebar, onLogout, onNavigat
   const [dialog, setDialog] = React.useState<DialogKind>(null)
   const [installPrompt, setInstallPrompt] = React.useState<BeforeInstallPromptEvent | null>(null)
   const [installed, setInstalled] = React.useState(false)
+  const installPromptRef = React.useRef<BeforeInstallPromptEvent | null>(null)
   const menuRef = React.useRef<HTMLDivElement | null>(null)
 
   React.useEffect(() => {
     const onBeforeInstall = (event: Event) => {
       event.preventDefault()
-      setInstallPrompt(event as BeforeInstallPromptEvent)
+      const promptEvent = event as BeforeInstallPromptEvent
+      installPromptRef.current = promptEvent
+      setInstallPrompt(promptEvent)
     }
     const onInstalled = () => {
       setInstalled(true)
+      installPromptRef.current = null
       setInstallPrompt(null)
       toast.success('Integrated EMIS has been installed.')
     }
     window.addEventListener('beforeinstallprompt', onBeforeInstall)
     window.addEventListener('appinstalled', onInstalled)
     if (window.matchMedia('(display-mode: standalone)').matches) setInstalled(true)
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => undefined)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' })
+        .then((registration) => registration.update())
+        .catch(() => undefined)
+    }
     return () => {
       window.removeEventListener('beforeinstallprompt', onBeforeInstall)
       window.removeEventListener('appinstalled', onInstalled)
@@ -61,16 +69,36 @@ export function Topbar({ user, sidebarOpen, onToggleSidebar, onLogout, onNavigat
       toast.info('Integrated EMIS is already installed on this device.')
       return
     }
-    if (installPrompt) {
+    const promptEvent = installPromptRef.current || installPrompt
+    if (promptEvent) {
       try {
-        await installPrompt.prompt()
-        const choice = await installPrompt.userChoice
-        if (choice.outcome === 'accepted') setInstallPrompt(null)
+        await promptEvent.prompt()
+        const choice = await promptEvent.userChoice
+        if (choice.outcome === 'accepted') {
+          installPromptRef.current = null
+          setInstallPrompt(null)
+        }
         else toast.info('Install dismissed — you can install any time from this button.')
       } catch {
         setDialog('install')
       }
       return
+    }
+    // Chromium may deliver beforeinstallprompt just after the button is first
+    // rendered. Give the global registration one turn to finish before using
+    // the manual instructions fallback.
+    if ('serviceWorker' in navigator) {
+      await navigator.serviceWorker.ready.catch(() => undefined)
+      const readyPrompt = installPromptRef.current || installPrompt
+      if (readyPrompt) {
+        await readyPrompt.prompt()
+        const choice = await readyPrompt.userChoice
+        if (choice.outcome === 'accepted') {
+          installPromptRef.current = null
+          setInstallPrompt(null)
+        }
+        return
+      }
     }
     // No native prompt available (browser already dismissed it once, iOS
     // Safari, or PWA requirements not met yet) — show manual instructions.
@@ -105,7 +133,7 @@ export function Topbar({ user, sidebarOpen, onToggleSidebar, onLogout, onNavigat
 
         {/* Header actions — icon-only on phones (like the live site), with
             labels appearing from the lg breakpoint up. */}
-        <nav className="ml-auto flex items-center gap-0.5 text-[13px] text-white/90 lg:gap-1.5 lg:text-[15px]">
+        <nav className="ml-auto flex items-center gap-0.5 text-[13px] text-white/90 lg:gap-1.5 lg:text-[13px]">
           <button type="button" onClick={installApp} aria-label="Install App" className="flex items-center gap-1.5 whitespace-nowrap rounded px-1.5 py-1.5 text-white/90 hover:bg-white/15 lg:px-2.5"><CloudDownload className="h-[18px] w-[18px] lg:h-5 lg:w-5" /><span className="hidden lg:inline">Install App</span></button>
           <button type="button" onClick={() => go('dps-rankings')} aria-label="District Performance ScoreCard" className="flex items-center gap-1.5 whitespace-nowrap rounded px-1.5 py-1.5 text-white/90 hover:bg-white/15 lg:px-2.5"><ClipboardList className="h-[18px] w-[18px] lg:h-5 lg:w-5" /><span className="hidden lg:inline">District Performance ScoreCard</span></button>
           <button type="button" onClick={() => openDialog('tutorial')} aria-label="hris tutorial" className="flex items-center gap-1.5 whitespace-nowrap rounded px-1.5 py-1.5 text-white/90 hover:bg-white/15 lg:px-2.5"><FileVideo className="h-[18px] w-[18px] lg:h-5 lg:w-5" /><span className="hidden lg:inline">hris tutorial</span></button>
@@ -113,8 +141,8 @@ export function Topbar({ user, sidebarOpen, onToggleSidebar, onLogout, onNavigat
         </nav>
 
         <div className="relative ml-1 shrink-0" ref={menuRef}>
-          <button type="button" onClick={() => setMenuOpen((v) => !v)} title={`${user.username} / ${user.role}`} aria-haspopup="menu" aria-expanded={menuOpen} className="flex items-center gap-1.5 rounded px-1.5 py-1.5 text-white hover:bg-white/15 lg:px-2.5">
-            <UserIcon className="h-[19px] w-[19px] lg:h-5 lg:w-5" /><span className="hidden min-w-0 truncate lg:inline"><span className="font-medium">{user.username}</span><span className="mx-1 text-white/60">/</span><span>{user.role}</span></span><ChevronDown className="h-4 w-4 text-white/70 lg:h-4 lg:w-4" />
+          <button type="button" onClick={() => setMenuOpen((v) => !v)} title={`${user.username} / ${user.role}`} aria-haspopup="menu" aria-expanded={menuOpen} className="flex items-center gap-1.5 rounded px-1.5 py-1.5 text-white hover:bg-white/15 lg:px-2.5 lg:text-[13px]">
+            <UserIcon className="h-[19px] w-[19px] lg:h-5 lg:w-5" /><span className="hidden min-w-0 truncate lg:inline"><span>{user.username}</span><span className="mx-1 text-white/60">/</span><span>{user.role}</span></span><ChevronDown className="h-4 w-4 text-white/70 lg:h-4 lg:w-4" />
           </button>
           {menuOpen && <div role="menu" className="absolute right-0 z-50 mt-1 w-[260px] max-w-[calc(100vw-1.5rem)] rounded-md border border-gray-200 bg-white py-1 shadow-lg">
             <div className="border-b border-gray-100 px-3 py-2"><div className="truncate text-sm font-semibold text-gray-800">{user.fullName}</div><div className="mt-0.5 text-[11px] text-gray-500">Role: <span className="font-medium">{formatRole(user.role)}</span></div></div>

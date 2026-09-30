@@ -37,6 +37,7 @@ export interface RealModuleConfig {
   igColumns?: string[]
   regions?: RealRegion[]
   empty?: string
+  searchLabel?: string
   savedReports?: string[]
   actions?: string[]
   charts?: string[]
@@ -120,15 +121,16 @@ export const REAL_MODULES: Record<string, RealModuleConfig> = {
     parent: "Office/School MIS",
     title: "Content for Social Media",
     mode: "irr",
+    searchLabel: "Go",
     tabs: ["Content Received"],
-    columns: ["Content Title", "Content Type", "Content Date", "Description", "Content Link", "Status", "Remarks"],
+    columns: ["School", "Content Type", "Uploade Media (Picture/Videos) - 10mb max", "Google Drive or any other link containing media", "Comments", "Status"],
     empty: "No data found.",
     actions: ["Create"],
   },
   "data-missing-in-ssr": {
     key: "data-missing-in-ssr",
     parent: "School Self Report (SSR) Form",
-    title: "Sanction/HR/Enrollments Details Data Missing in SSR",
+    title: "Sanction/HR/Enrollment Data (SSR)",
     mode: "irr",
     filters: [
       { label: "SSR Session Year", kind: "select", options: ["-- Select SSR session year --", "SSR (2025-26) - 2025-26", "SSR (2026-27) -", "SSR(2023-24) - 2023-24", "SSR(2024-25) - 2024-25"], value: "" },
@@ -158,6 +160,7 @@ export const REAL_MODULES: Record<string, RealModuleConfig> = {
     parent: "District Performance ScoreCard (DPS)",
     title: "DPS - iEMIS Updation (Enrollment - Comparison b/w Class-wise Entry and Profiles) - 5 Marks",
     mode: "irr",
+    searchLabel: "Go",
     empty: "No data found.",
   },
   "dps-iemis-updation-human-resource-mis": {
@@ -165,13 +168,16 @@ export const REAL_MODULES: Record<string, RealModuleConfig> = {
     parent: "District Performance ScoreCard (DPS)",
     title: "DPS - iEMIS Updation (Human Resource MIS) - 10 Marks",
     mode: "irr",
+    columns: ["Personnel No", "Name", "Father Name", "CNIC", "Gender", "DOB", "Domicile", "Emergency Contact", "Govt Entry Date", "Appointment Quota", "Cadre Group", "EMIS Code", "School", "Level", "District", "Union Council", "DPS Month", "DPS Year"],
     empty: "No data found.",
   },
   "dps-iemis-updation-osmis": {
     key: "dps-iemis-updation-osmis",
     parent: "District Performance ScoreCard (DPS)",
     title: "DPS - iEMIS Updation (Office-School MIS) - 10 Marks",
-    mode: "irr",
+    mode: "ig",
+    searchLabel: "Go",
+    igColumns: ["EMIS Code", "School", "Gender", "Co-Education", "District", "Union Council", "Level", "Ownership Status", "Weatherzone", "NA", "PK", "NC/ VC", "X Coordinate", "Y Coordinate", "Rooms", "Storie-wise Rooms", "Sanctioned Posts", "PTC Members", "Is PTC Established", "Is PTC Account Updated", "Is Basic Facilities Updated", "Monthly Updation", "Monthly Enrollment"],
     empty: "No data found.",
   },
   "dps-rankings": {
@@ -192,8 +198,20 @@ export const REAL_MODULES: Record<string, RealModuleConfig> = {
     parent: "School Self Report (SSR) Form",
     title: "Student Enrollment by Group/ Section",
     mode: "irr",
+    searchLabel: "Go",
     filters: [
       { label: "SSR Session Year", kind: "select", options: ["-- Select SSR session year --", "SSR (2025-26) - 2025-26", "SSR (2026-27) -", "SSR(2023-24) - 2023-24", "SSR(2024-25) - 2024-25"], value: "" },
+    ],
+    empty: "No data found.",
+  },
+  "enrolment-campaign-status": {
+    key: "enrolment-campaign-status",
+    parent: "Students MIS",
+    title: "Enrolment Campaign Report",
+    mode: "irr",
+    searchLabel: "Go",
+    filters: [
+      { label: "Session Year", kind: "select", options: ["--Select Session Year--", "2021-22", "2022-23", "2023-24", "2024-25", "2025-26", "2026-27"], value: "" },
     ],
     empty: "No data found.",
   },
@@ -202,7 +220,9 @@ export const REAL_MODULES: Record<string, RealModuleConfig> = {
     parent: "Students MIS",
     title: "ENROLMENT CAMPAIGN ACTIVITIES",
     mode: "irr",
+    searchLabel: "Go",
     tabs: ["Daily Campaign Activities"],
+    columns: ["Activity Date", "No of Activities for Campaign using TV, Radio, Social media, Print media", "No of Door To Door Campaign", "No of Meeting with Tehsil & VC Chairmen", "No of Meetings Chief Khateeb", "No of Meetings District Administration", "No of Meetings with Deeni Madaris Scholars", "No of Meetings with Hujra Elders", "No of Meetings with Religious Leaders", "No of Walks, Rallies, Seminar", "Pictures", "Link", "Entry/Updated by", "Last Update on"],
     empty: "No data found.",
   },
   "learning-difficult-students-report-ssr": {
@@ -230,6 +250,7 @@ export const REAL_MODULES: Record<string, RealModuleConfig> = {
     filters: [
       { label: "School Gender", kind: "select", options: ["-- Select Gender --", "MALE"], value: "MALE" },
     ],
+    columns: ["EMIS Code", "Office/School", "School Gender", "Division", "District", "Tehsil", "Union Council", "Circle Name", "Department", "Directorate", "District Office/School", "Status", "Level", "Updation Month", "Basic Profile Updated", "Basic Facilities Updated", "Sanction Post Updated", "Working Post Updated", "Enrollment", "Profile Enrollment", "Enrollment Details", "Enter By", "Entry Date Time"],
     empty: "No data found.",
     savedReports: ["1. Primary Report", "1. 1Jun 2024", "2. 23719", "3. Anwar khan", "4. August updation", "5. BILAL ENROLLMEN56", "6. bilal monthly report", "7. bilal Monthly Updation Report", "8. DEFAULTERS SCHOOLS (MOHMAND-M) BY ARM", "9. DEFAULTERS SCHOOLS (MOHMAND-M) BY ARM", "10. GGHS DAG GOSAM", "11. GGMS Urmal Dhere July 2024 Rwport", "12. GHS sehakiBala monthly report", "13. GMSSANDOWA", "14. Jun 2024", "15. Mehreen Abid", "16. monthly report", "17. monthly report", "18. monthly report", "19. monthly report"],
   },
@@ -250,7 +271,7 @@ export const REAL_MODULES: Record<string, RealModuleConfig> = {
     mode: "ig",
     notice: "AMOUNT MUST BE ENTERED IN PAK RUPEES ONLY (NOT IN MILLION OR BILLION)",
     tabs: ["PTC Available Balance Entry Form", "PTC Amount (Report)"],
-    igColumns: ["Emis Code", "School Name", "School Gender", "School Level", "District", "Tehsil", "NC/VC Name", "Additional Class Room", "Group Latrine", "Boundary Wall", "Solarization", "Electrification", "Water Supply", "DSS Settled", "DSS Merged", "CRC", "Petty Repair", "Autonomy Budget", "PTC Hiring", "Other Funds Donated by(Name of Org./Donors/NGOs)", "Other FundsTotal Amount", "Bank Profit", "Total AvailableBalance (PKR)", "Bank Name", "Bank Remakrs", "Branch Name", "Branch Code", "Account IBAN #", "Update By", "Update Date"],
+    igColumns: ["Emis Code", "School Name", "School Gender Sorted Descending 2", "School Level Sorted Descending 3", "District Sorted Ascending 1", "Tehsil Sorted Ascending 4", "NC/VC Name Sorted Ascending 5", "Additional Class Room", "Group Latrine", "Boundary Wall", "Solarization", "Electrification", "Water Supply", "DSS Settled", "DSS Merged", "CRC", "Petty Repair", "Autonomy Budget", "PTC Hiring", "Other Funds Donated by(Name of Org./Donors/NGOs)", "Other FundsTotal Amount", "Bank Profit", "Total AvailableBalance (PKR)", "Bank Name", "Bank Remakrs", "Branch Name", "Branch Code", "Account IBAN #", "Update By", "Update Date"],
     empty: "No data found",
     savedReports: ["1. Primary Report", "2. District-wise Total Balance Including Bank Profit", "3. Work Status District-wise"],
     bankRemarksOptions: ["Active", "Dormant", "Inactive"],
@@ -343,6 +364,7 @@ export const REAL_MODULES: Record<string, RealModuleConfig> = {
     parent: "School Self Report (SSR) Form",
     title: "School PTC Members",
     mode: "irr",
+    searchLabel: "Go",
     filters: [
       { label: "SSR Session Year", kind: "select", options: ["-- Select SSR session year --", "SSR (2025-26) - 2025-26", "SSR (2026-27) -", "SSR(2023-24) - 2023-24", "SSR(2024-25) - 2024-25"], value: "" },
     ],
@@ -362,12 +384,12 @@ export const REAL_MODULES: Record<string, RealModuleConfig> = {
     title: "School Classes Section",
     mode: "irr",
     filters: [
-      { label: "Shift", kind: "radio", options: ["S", "M"], value: "S" },
+      { label: "Shift", kind: "radio", options: ["Single Shift", "Double Shift"], value: "Single Shift" },
     ],
     regions: [
       { title: "Classes Name List", columns: [], empty: "Classes Name List Not Found..!" },
-      { title: "Subject Groups", columns: [], empty: "Subject Groups Data Not Found..!" },
-      { title: "Subject List", columns: [], empty: "Subject List Data Not Found..!" },
+      { title: "Subject Groups", columns: [], empty: "Subject Group Data Not Found ...!" },
+      { title: "Subject List", columns: [], empty: "Subject List Not Found ...!" },
       { title: "CLASS SECTION LIST", columns: [], empty: "Class Section Record Not Found...!" },
     ],
   },
