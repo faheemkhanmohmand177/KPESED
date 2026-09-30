@@ -57,20 +57,18 @@
 
   /* ── KPESD portal palette ──────────────────────────────────────────────
      Read off the live portal's screenshots (blue masthead, charcoal
-     sidebar, red primary actions, blue radio/checkbox).
-     Blue is darkened slightly from the screenshot's #1a6fc4 to #1565c0 so
-     white header text clears WCAG AA (5.4:1 vs 4.5:1). */
-  --kpes-blue: #0b6fc4;
-  --kpes-blue-dark: #07579e;
+     sidebar, red primary actions, blue radio/checkbox). */
+  --kpes-blue: #1565c0;
+  --kpes-blue-dark: #0d47a1;
   --kpes-blue-light: #e8f0fb;
   --kpes-charcoal: #2f383c;
   --kpes-charcoal-dark: #252c2f;
   --kpes-red: #cc0000;
   --kpes-red-dark: #a80000;
 
-  /* Blue masthead height — 56px on phones (like the live APEX mobile top
-     bar) and a compact 34px from the lg breakpoint up. The mobile drawer
-     and its click-catcher anchor to the same variable. */
+  /* Blue masthead height — 56px on phones and 52px on desktop, matching
+     the live APEX top bar. The mobile drawer and its click-catcher anchor
+     to the same variable. */
   --apex-header-h: calc(56px + env(safe-area-inset-top));
 
   --background: #ffffff;
@@ -379,6 +377,21 @@ html[data-text='large'] body { font-size: 15px; }
   border-color: #ddd;
   cursor: not-allowed;
 }
+/* Joined controls — search input + Search button attached like the live IRR */
+.apex-btn--join-l {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.apex-input--join-r {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+/* Inline selects inside the IRR toolbar keep their natural width instead of
+   stretching to 100% like form selects. */
+select.apex-select.apex-select--inline {
+  width: auto;
+  max-width: 260px;
+}
 
 /* Apex-style inputs */
 .apex-input,
@@ -445,25 +458,40 @@ html[data-text='large'] body { font-size: 15px; }
 }
 @media (min-width: 1024px) {
   :root {
-    --apex-header-h: calc(34px + env(safe-area-inset-top));
+    --apex-header-h: calc(52px + env(safe-area-inset-top));
   }
 }
 
-/* Sidebar tree item styles — dark charcoal, as on the live portal */
+/* Sidebar tree item styles — dark charcoal, as on the live portal.
+   Desktop rows are tall (~46px) with ~17px labels and single-line
+   ellipsis, exactly like the live a-TreeView. Children align flush with
+   their parents (no extra indent, no guide line). */
 .tree-item {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 8px;
+  gap: 8px;
+  padding: 4px 10px;
+  min-height: 46px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 16.5px;
   color: #f0f0f0;
-  border-radius: 2px;
+  border-radius: 0;
   user-select: none;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
+.tree-item button {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .tree-item:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.1);
+}
+/* An expanded group row: slightly lighter with the live site's blue
+   underline beneath it. */
+.tree-item--expanded {
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 -2px 0 #2f86e0;
 }
 .tree-item--active {
   background: #1565c0;
@@ -471,9 +499,46 @@ html[data-text='large'] body { font-size: 15px; }
   font-weight: 600;
 }
 .tree-children {
-  padding-left: 16px;
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-  margin-left: 14px;
+  padding-left: 0;
+  border-left: none;
+  margin-left: 0;
+}
+
+/* Apex-style inline report filters — the live IRR renders each filter as
+   one bordered box with the label sitting above the value inside it. */
+.apex-filter {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 150px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  background: #fff;
+  padding: 3px 10px 4px;
+}
+.apex-filter .apex-form-label {
+  margin-bottom: 0;
+  font-size: 11.5px;
+  color: #333;
+}
+.apex-filter select,
+.apex-filter input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 13.5px;
+  height: 24px;
+  padding: 0 2px;
+  color: #333;
+  outline: none;
+}
+.apex-filter input[readonly] {
+  background: #f5f5f5;
+}
+.apex-filter select:focus,
+.apex-filter input:focus {
+  outline: none;
+  box-shadow: none;
 }
 
 /* ==========================================================================
@@ -559,9 +624,9 @@ html[data-text='large'] body { font-size: 15px; }
   .tree-item--active,
   .tree-item--active:active {
     background: rgba(0, 0, 0, 0.18);
-    box-shadow: inset 0 0 0 2px #0b6fc4;
+    box-shadow: inset 0 0 0 2px #1565c0;
   }
-  /* Sub-menus indent without the desktop guide line. */
+  /* Children already align flush with parents on desktop; keep it. */
   .tree-children {
     margin-left: 0;
     padding-left: 0;
@@ -574,6 +639,16 @@ html[data-text='large'] body { font-size: 15px; }
 
   .apex-form-label {
     font-size: 12px;
+  }
+
+  /* Inline filter boxes keep a thumb-friendly control height on touch. */
+  .apex-filter select,
+  .apex-filter input {
+    font-size: 14px;
+    height: 32px;
+  }
+  .apex-filter {
+    flex: 1 1 160px;
   }
 
   .apex-region {

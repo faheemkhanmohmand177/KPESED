@@ -108,9 +108,11 @@ export const NAV_TREE: NavItem[] = [
     id: 'assets-mis',
     label: 'Assets MIS',
     children: [
-      leaf('asset-profile', 'Asset Profile', 'Assets MIS'),
-      leaf('assets-detail', 'Asset Details', 'Assets MIS'),
-      leaf('assets-report', 'Assets Report', 'Assets MIS'),
+      // The live portal labels these entries with a literal ".." prefix
+      // (visible in the real sidebar); module keys stay unchanged.
+      { id: 'asset-profile', label: '..Asset Profile', module: 'asset-profile', icon: 'Assets MIS' },
+      { id: 'assets-detail', label: '..Asset Details', module: 'assets-detail', icon: 'Assets MIS' },
+      { id: 'assets-report', label: '..Assets Report', module: 'assets-report', icon: 'Assets MIS' },
     ],
   },
   { id: 'survey-tree-form', label: 'Survey - Environment Friendly Trees Form', module: 'survey-tree-form' },

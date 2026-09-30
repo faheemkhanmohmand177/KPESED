@@ -39,8 +39,12 @@ export const metadata: Metadata = {
   },
   formatDetection: { telephone: false },
   icons: {
-    icon: "/favicon.ico",
-    apple: "/hrmis/app-icon-192.png",
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/hrmis/app-icon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/hrmis/app-icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: "/hrmis/apple-touch-icon.png",
   },
 };
 

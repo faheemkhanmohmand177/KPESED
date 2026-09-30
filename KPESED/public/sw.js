@@ -1,4 +1,4 @@
-const CACHE = 'integrated-emis-shell-v1'
+const CACHE = 'integrated-emis-shell-v2'
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(['/'])) )
   self.skipWaiting()

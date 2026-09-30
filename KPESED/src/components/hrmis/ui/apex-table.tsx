@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface ApexTableColumn {
@@ -97,8 +98,13 @@ export function ApexTable({
         <tbody>
           {rows.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} className="text-center text-gray-500 italic py-6">
-                {emptyText}
+              <td colSpan={columns.length}>
+                {/* Empty state like the live portal: a large magnifier glyph
+                    above the "… Not Found" message. */}
+                <div className="flex flex-col items-center justify-center gap-2 px-4 py-9">
+                  <Search className="h-11 w-11 text-gray-300" strokeWidth={1.25} aria-hidden />
+                  <span className="text-sm text-gray-500">{emptyText}</span>
+                </div>
               </td>
             </tr>
           ) : (

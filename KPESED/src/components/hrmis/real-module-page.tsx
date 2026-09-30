@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import {
-  Download, Filter, ChevronRight, Search, SlidersHorizontal, Plus, RefreshCw,
+  Download, Filter, ChevronDown, Search, SlidersHorizontal, Plus, RefreshCw,
   Trash2, Edit3, Save, RotateCcw, AlertTriangle,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -27,10 +27,9 @@ interface RealModulePageProps {
  * edit, delete, CSV download, saved-report select, rows-per-page, functional
  * filters and auto-seeded editable grids (Tree Survey, PTC headwise balance).
  */
-export function RealModulePage({ moduleKey, config, onNavigate }: RealModulePageProps) {
+export function RealModulePage({ moduleKey, config }: RealModulePageProps) {
   const meta = MODULES[moduleKey]
   const title = config.title || meta?.title || moduleKey
-  const parent = config.parent || meta?.parent || 'Main'
   const formDef = MODULE_FORMS[moduleKey]
 
   const [records, setRecords] = React.useState<PortalRecord[]>([])
@@ -220,9 +219,9 @@ export function RealModulePage({ moduleKey, config, onNavigate }: RealModulePage
     const id = `${moduleKey}-filter-${index}`
     if (field.kind === 'select') {
       return (
-        <div key={index}>
+        <div key={index} className="apex-filter">
           <label className="apex-form-label" htmlFor={id}>{field.label}</label>
-          <select id={id} className="apex-select min-w-[150px]" defaultValue={field.value || ''} disabled={field.disabled}>
+          <select id={id} defaultValue={field.value || ''} disabled={field.disabled}>
             {(field.options || []).map((o) => <option key={o} value={o === (field.options?.[0]) ? '' : o}>{o}</option>)}
           </select>
         </div>
@@ -244,16 +243,16 @@ export function RealModulePage({ moduleKey, config, onNavigate }: RealModulePage
     }
     if (field.kind === 'readonly') {
       return (
-        <div key={index}>
+        <div key={index} className="apex-filter">
           <label className="apex-form-label" htmlFor={id}>{field.label}</label>
-          <input id={id} className="apex-input bg-gray-100" readOnly value={field.value || ''} />
+          <input id={id} readOnly value={field.value || ''} />
         </div>
       )
     }
     return (
-      <div key={index}>
+      <div key={index} className="apex-filter">
         <label className="apex-form-label" htmlFor={id}>{field.label}</label>
-        <input id={id} type={field.kind === 'date' ? 'date' : 'text'} className="apex-input min-w-[140px]" defaultValue={field.value || ''} disabled={field.disabled} />
+        <input id={id} type={field.kind === 'date' ? 'date' : 'text'} defaultValue={field.value || ''} disabled={field.disabled} />
       </div>
     )
   }
@@ -262,8 +261,6 @@ export function RealModulePage({ moduleKey, config, onNavigate }: RealModulePage
   if (config.mode === 'ora') {
     return (
       <div className="t-Body-contentInner">
-        <Breadcrumb parent={parent} title={title} onNavigate={onNavigate} />
-        <h1 className="mb-2 text-base font-semibold text-[#333] sm:text-lg">{title}</h1>
         <section className="apex-region" aria-label={title}>
           <div className="apex-region-header min-h-[34px]"><span className="flex items-center gap-2"><Filter className="h-3.5 w-3.5 text-gray-500" />{title}</span><span className="flex gap-1.5"><button type="button" className="apex-btn"><RefreshCw className="h-3.5 w-3.5" /><span className="hidden sm:inline">Refresh Report</span></button><button type="button" className="apex-btn"><Search className="h-3.5 w-3.5" /><span className="hidden sm:inline">Search</span></button><button type="button" className="apex-btn"><SlidersHorizontal className="h-3.5 w-3.5" /><span className="hidden sm:inline">Actions</span></button></span></div>
           <div className="apex-region-body">
@@ -284,7 +281,6 @@ export function RealModulePage({ moduleKey, config, onNavigate }: RealModulePage
   if (config.mode === 'form') {
     return (
       <div className="t-Body-contentInner">
-        <Breadcrumb parent={parent} title={title} onNavigate={onNavigate} />
         {config.tabs && <ApexTabs tabs={config.tabs} tab={tab} onTab={setTab} />}
         {(config.formFields || []).length > 0 && (
           <section className="apex-region" aria-label={title}>
@@ -350,12 +346,10 @@ export function RealModulePage({ moduleKey, config, onNavigate }: RealModulePage
   }))
 
   const hasTabbedIG = isIG && config.tabs && config.tabs.length === 2
+  void hasTabbedIG
 
   return (
     <div className="t-Body-contentInner">
-      <Breadcrumb parent={parent} title={title} onNavigate={onNavigate} />
-      <h1 className="mb-2 text-base font-semibold text-[#333] sm:text-lg">{title}</h1>
-
       {config.notice && (
         <div className="mb-3 flex items-start gap-2 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-900" role="note">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -372,7 +366,7 @@ export function RealModulePage({ moduleKey, config, onNavigate }: RealModulePage
               role="tab"
               aria-selected={tab === i}
               onClick={() => setTab(i)}
-              className={`px-3 py-1.5 text-xs font-medium transition-colors ${tab === i ? 'border-b-2 border-[#0b6fc4] bg-white text-[#0b6fc4]' : 'text-gray-600 hover:bg-white/60'}`}
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${tab === i ? 'border-b-2 border-[#1565c0] bg-white text-[#1565c0]' : 'text-gray-600 hover:bg-white/60'}`}
             >
               {t}
             </button>
@@ -380,54 +374,49 @@ export function RealModulePage({ moduleKey, config, onNavigate }: RealModulePage
         </div>
       )}
 
-      <section className="apex-region" aria-label={title}>
-        <div className="apex-region-header min-h-[34px]">
-          <span className="flex items-center gap-2"><Filter className="h-3.5 w-3.5 text-gray-500" />{isIG && hasTabbedIG ? config.tabs?.[tab] || title : title}</span>
-          <span className="flex flex-wrap gap-1.5">
-            <button type="button" className="apex-btn" onClick={downloadCsv} title="Download CSV"><Download className="h-3.5 w-3.5" /><span className="hidden sm:inline">Download</span></button>
-            {isIG && !editing && <button type="button" className="apex-btn" onClick={startEdit}><Edit3 className="h-3.5 w-3.5" /><span className="hidden sm:inline">Edit</span></button>}
-            {isIG && editing && <button type="button" className="apex-btn apex-btn--primary" onClick={() => void saveGrid()}><Save className="h-3.5 w-3.5" /><span className="hidden sm:inline">Save</span></button>}
-            {isIG && editing && <button type="button" className="apex-btn" onClick={() => void addGridRow()}><Plus className="h-3.5 w-3.5" /><span className="hidden sm:inline">Add Row</span></button>}
-            {isIG && editing && <button type="button" className="apex-btn" onClick={() => { setEditing(false); void load() }}><RotateCcw className="h-3.5 w-3.5" /><span className="hidden sm:inline">Reset</span></button>}
-            {formDef && !editing && (
-              <button type="button" className="apex-btn apex-btn--primary" onClick={openAddForm}>
-                <Plus className="h-3.5 w-3.5" /><span>{formDef.createLabel}</span>
-              </button>
-            )}
-            <button type="button" className="apex-btn" onClick={() => setShowActions((v) => !v)}><SlidersHorizontal className="h-3.5 w-3.5" /><span className="hidden sm:inline">Actions</span></button>
-          </span>
+      {/* Page-level actions — the live portal places Create / Edit controls
+          at the top-right, above the report region. */}
+      {(formDef || isIG) && (
+        <div className="mb-2 flex flex-wrap items-center justify-end gap-1.5">
+          {isIG && !editing && <button type="button" className="apex-btn" onClick={startEdit}><Edit3 className="h-3.5 w-3.5" /><span className="hidden sm:inline">Edit</span></button>}
+          {isIG && editing && <button type="button" className="apex-btn apex-btn--primary" onClick={() => void saveGrid()}><Save className="h-3.5 w-3.5" />Save</button>}
+          {isIG && editing && <button type="button" className="apex-btn" onClick={() => void addGridRow()}><Plus className="h-3.5 w-3.5" /><span className="hidden sm:inline">Add Row</span></button>}
+          {isIG && editing && <button type="button" className="apex-btn" onClick={() => { setEditing(false); void load() }}><RotateCcw className="h-3.5 w-3.5" /><span className="hidden sm:inline">Reset</span></button>}
+          {formDef && !editing && (
+            <button type="button" className="apex-btn apex-btn--primary" onClick={openAddForm}>
+              <Plus className="h-3.5 w-3.5" /><span>{formDef.createLabel}</span>
+            </button>
+          )}
+          <button type="button" className="apex-btn" onClick={downloadCsv} title="Download CSV"><Download className="h-3.5 w-3.5" /><span className="hidden sm:inline">Download</span></button>
         </div>
+      )}
 
-        {showActions && (
-          <div className="flex flex-wrap gap-2 border-b border-[#e5e5e5] bg-[#fafafa] px-3 py-2">
-            {formDef && <button type="button" className="apex-btn" onClick={openAddForm}><Plus className="h-3.5 w-3.5" />{formDef.createLabel}</button>}
-            <button type="button" className="apex-btn" onClick={() => void load()}><RefreshCw className="h-3.5 w-3.5" />Refresh</button>
-            <button type="button" className="apex-btn" onClick={downloadCsv}><Download className="h-3.5 w-3.5" />Download (CSV)</button>
-          </div>
-        )}
-
+      <section className="apex-region" aria-label={title}>
         <div className="apex-region-body">
+          {/* APEX inline filter boxes — each filter is one bordered box with
+              the label above the value, laid out horizontally like the live
+              Interactive Report. */}
           {(config.filters || []).length > 0 && (
-            <div className="mb-3 flex flex-wrap items-end gap-3 rounded border border-[#e5e5e5] bg-[#fafafa] p-3">
+            <div className="mb-3 flex flex-wrap items-stretch gap-2">
               {(config.filters || []).map((f, i) => renderFilterField(f, i))}
             </div>
           )}
 
           {formDef?.functionalFilter && (
-            <div className="mb-3 flex flex-wrap items-end gap-3 rounded border border-[#e5e5e5] bg-[#fafafa] p-3">
+            <div className="mb-3 flex flex-wrap items-stretch gap-2">
               {formDef.functionalFilter.kind === 'date' ? (
-                <div>
+                <div className="apex-filter">
                   <label className="apex-form-label" htmlFor={`${moduleKey}-fnfilter`}>{formDef.functionalFilter.label}</label>
                   <input
-                    id={`${moduleKey}-fnfilter`} type="date" className="apex-input min-w-[140px]" value={filterValue}
+                    id={`${moduleKey}-fnfilter`} type="date" value={filterValue}
                     onChange={(e) => setFilterValue(e.target.value)}
                   />
                 </div>
               ) : (
-                <div>
+                <div className="apex-filter">
                   <label className="apex-form-label" htmlFor={`${moduleKey}-fnfilter`}>{formDef.functionalFilter.label}</label>
                   <select
-                    id={`${moduleKey}-fnfilter`} className="apex-select min-w-[170px]" value={filterValue}
+                    id={`${moduleKey}-fnfilter`} value={filterValue}
                     onChange={(e) => setFilterValue(e.target.value)}
                   >
                     <option value="">-- {formDef.functionalFilter.label} --</option>
@@ -436,34 +425,46 @@ export function RealModulePage({ moduleKey, config, onNavigate }: RealModulePage
                 </div>
               )}
               {filterValue && (
-                <button type="button" className="apex-btn" onClick={() => setFilterValue('')}>Clear Filter</button>
+                <button type="button" className="apex-btn self-center" onClick={() => setFilterValue('')}>Clear Filter</button>
               )}
             </div>
           )}
 
-          {(config.savedReports || []).length > 0 && (
-            <div className="mb-2 flex flex-wrap items-end gap-2">
-              <div>
-                <label className="apex-form-label">Saved Reports</label>
-                <select className="apex-select min-w-[220px]">{(config.savedReports || []).map((r) => <option key={r}>{r}</option>)}</select>
-              </div>
+          {/* APEX Interactive Report toolbar — search box with attached
+              Search button, saved-report select, Rows selector and the
+              Actions menu, all on one row (like the live portal). */}
+          <div role="search" aria-label={`Search bar of ${title}`} className="mb-2 flex flex-wrap items-center gap-2">
+            <button type="button" className="apex-btn px-2" title="Select columns to search" aria-label="Select columns to search"><Search className="h-3.5 w-3.5" /><ChevronDown className="h-3 w-3 text-gray-500" /></button>
+            <div className="flex min-w-[200px] flex-1 items-stretch">
+              <input
+                type="search"
+                aria-label="Search report"
+                placeholder="Search…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') setAppliedSearch(search) }}
+                className="apex-input flex-1"
+              />
+              <button type="button" className="apex-btn apex-btn--join-l" onClick={() => { setAppliedSearch(search); }}><Search className="h-3.5 w-3.5" />Search</button>
             </div>
-          )}
-
-          <div role="search" aria-label={`Search bar of ${title}`} className="mb-2 flex flex-wrap items-end gap-2">
-            <button type="button" className="apex-btn">Select columns to search</button>
-            <div className="min-w-[160px] flex-1">
-              <label className="apex-form-label">Search Report</label>
-              <input type="search" placeholder="Search…" value={search} onChange={(e) => setSearch(e.target.value)} className="apex-input" />
-            </div>
-            <button type="button" className="apex-btn apex-btn--primary" onClick={() => { setAppliedSearch(search); }}><Search className="h-3.5 w-3.5" />Search</button>
-            <div>
-              <label className="apex-form-label">Rows</label>
-              <select value={pageSize} onChange={(e) => setPageSize(e.target.value)} className="apex-select w-[80px] sm:w-[90px]">
+            {(config.savedReports || []).length > 0 && (
+              <select aria-label="Saved reports" className="apex-select apex-select--inline min-w-[150px]">{(config.savedReports || []).map((r) => <option key={r}>{r}</option>)}</select>
+            )}
+            <div className="flex items-center gap-1.5">
+              <span className="whitespace-nowrap text-xs text-gray-600">Rows</span>
+              <select aria-label="Rows per page" value={pageSize} onChange={(e) => setPageSize(e.target.value)} className="apex-select apex-select--inline w-[74px]">
                 {ROWS_PER_PAGE.map((v) => <option key={String(v)}>{v}</option>)}
               </select>
             </div>
+            <button type="button" className="apex-btn" onClick={() => setShowActions((v) => !v)}><SlidersHorizontal className="h-3.5 w-3.5" />Actions<ChevronDown className="h-3 w-3 text-gray-500" /></button>
           </div>
+
+          {showActions && (
+            <div className="mb-2 flex flex-wrap gap-2 rounded border border-[#e5e5e5] bg-[#fafafa] px-3 py-2">
+              <button type="button" className="apex-btn" onClick={() => void load()}><RefreshCw className="h-3.5 w-3.5" />Refresh</button>
+              <button type="button" className="apex-btn" onClick={downloadCsv}><Download className="h-3.5 w-3.5" />Download (CSV)</button>
+            </div>
+          )}
 
           {loading ? (
             <div className="py-10 text-center text-sm text-gray-500">Loading…</div>
@@ -567,24 +568,12 @@ function FormInput({ field, value, onChange }: { field: FormFieldDef; value: str
   )
 }
 
-function Breadcrumb({ parent, title, onNavigate }: { parent: string; title: string; onNavigate: (m: string) => void }) {
-  return (
-    <nav aria-label="Breadcrumb" className="mb-2 flex flex-wrap items-center gap-1 text-xs text-gray-500">
-      <button type="button" onClick={() => onNavigate('home')} className="hover:text-[#1565c0] hover:underline">Home</button>
-      <ChevronRight className="h-3 w-3" />
-      <span>{parent}</span>
-      <ChevronRight className="h-3 w-3" />
-      <span className="font-medium text-[#1565c0]">{title}</span>
-    </nav>
-  )
-}
-
 function ApexTabs({ tabs, tab, onTab }: { tabs: string[]; tab: number; onTab: (i: number) => void }) {
   return (
     <div className="mb-0 flex flex-wrap gap-px overflow-hidden rounded-t border border-b-0 border-[#d6d6d6] bg-[#f5f5f5]" role="tablist">
       {tabs.map((t, i) => (
         <button key={t} type="button" role="tab" aria-selected={tab === i} onClick={() => onTab(i)}
-          className={`px-3 py-1.5 text-xs font-medium transition-colors ${tab === i ? 'border-b-2 border-[#0b6fc4] bg-white text-[#0b6fc4]' : 'text-gray-600 hover:bg-white/60'}`}>
+          className={`px-3 py-1.5 text-xs font-medium transition-colors ${tab === i ? 'border-b-2 border-[#1565c0] bg-white text-[#1565c0]' : 'text-gray-600 hover:bg-white/60'}`}>
           {t}
         </button>
       ))}

@@ -20,11 +20,13 @@ export interface SidebarTreeItemProps {
 
 /**
  * Reusable tree node for the sidebar tree navigation.
- * Matches the look of the Oracle APEX a-TreeView node.
+ * Matches the look of the Oracle APEX a-TreeView node on the live portal:
  *
- * Like the live portal, every row carries the » navigation glyph (doubled
- * on the top level), so leaf rows align perfectly with group rows. The
- * expand/collapse chevron stays on the far right of the row.
+ * - Every row (group or leaf) carries the same » glyph at the same x, so
+ *   sub-items sit flush with their parent rows — exactly like the real site.
+ * - Tall ~46px rows with ~17px labels, single-line ellipsis.
+ * - An expanded group row is highlighted with the live site's blue underline.
+ * - The expand/collapse chevron stays on the far right of the row.
  */
 export function SidebarTreeItem({
   label,
@@ -37,19 +39,23 @@ export function SidebarTreeItem({
   onClick,
   onToggleExpand,
 }: SidebarTreeItemProps) {
-  // Depth-aware indent; the real tree nests further than two levels.
-  const indent = 8 + level * 16
+  // The live tree keeps every level flush-left; only a small constant pad.
+  void level
 
   return (
     <div
-      className={cn('tree-item', active && 'tree-item--active')}
-      style={{ paddingLeft: `${indent}px` }}
+      className={cn(
+        'tree-item',
+        active && 'tree-item--active',
+        hasChildren && expanded && !active && 'tree-item--expanded',
+      )}
+      style={{ paddingLeft: '12px' }}
     >
       {icon === 'book' ? (
-        <BookOpen className="tree-caret h-4 w-4 shrink-0" aria-hidden />
+        <BookOpen className="tree-caret h-[18px] w-[18px] shrink-0" aria-hidden />
       ) : (
-        <span className="tree-caret text-[11px] text-white/45" aria-hidden>
-          {level === 0 ? '»»' : '»'}
+        <span className="tree-caret text-[15px] text-white/75" aria-hidden>
+          »
         </span>
       )}
 
@@ -59,7 +65,7 @@ export function SidebarTreeItem({
         // A node with no module of its own acts as a pure expander, matching
         // the real site where clicking the parent row just opens the sub-menu.
         className={cn(
-          'min-w-0 flex-1 whitespace-normal break-words py-0.5 text-left leading-tight',
+          'min-w-0 flex-1 text-left leading-tight',
         )}
         title={label}
       >
@@ -78,16 +84,16 @@ export function SidebarTreeItem({
             e.stopPropagation()
             onToggleExpand?.()
           }}
-          className="mr-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-white/70 transition-colors hover:bg-white/20 hover:text-white"
+          className="mr-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-white/70 transition-colors hover:bg-white/20 hover:text-white"
         >
           {expanded ? (
-            <ChevronDown className="h-4 w-4" />
+            <ChevronDown className="h-4.5 w-4.5" />
           ) : (
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-4.5 w-4.5" />
           )}
         </button>
       ) : (
-        <span className="mr-1 inline-block h-4 w-6 shrink-0" aria-hidden />
+        <span className="mr-1 inline-block h-4 w-5 shrink-0" aria-hidden />
       )}
     </div>
   )

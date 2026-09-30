@@ -121,11 +121,11 @@ export function AppShell({
             </main>
 
             <footer
-              className="t-Footer mt-auto flex flex-col items-start gap-1 border-t border-[#d6d6d6] bg-[#f5f5f5] px-3 py-2 text-gray-700 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
+              className="t-Footer mt-auto flex flex-col items-start gap-1 border-t border-[#d6d6d6] bg-[#f5f5f5] px-3 py-2 text-gray-700 sm:flex-row sm:items-center sm:gap-3 sm:px-4"
               style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
               role="contentinfo"
             >
-              <div className="t-Footer-body flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px]">
+              <div className="t-Footer-body flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[12px] sm:text-[13px]">
                 <div className="t-Footer-version">Developed By : EMIS E&amp;SE Department</div>
                 <div className="t-Footer-customize">
                   <button type="button" onClick={() => setCustomizeOpen(true)} className="text-[#1565c0] hover:underline">
@@ -133,7 +133,6 @@ export function AppShell({
                   </button>
                 </div>
               </div>
-              <div className="text-[10px] text-gray-400 sm:text-[10px]">Integrated EMIS Portal</div>
             </footer>
           </div>
         </div>
