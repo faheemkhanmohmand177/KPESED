@@ -22,8 +22,9 @@ export interface SidebarTreeItemProps {
  * Reusable tree node for the sidebar tree navigation.
  * Matches the look of the Oracle APEX a-TreeView node on the live portal:
  *
- * - Every row (group or leaf) carries the same » glyph at the same x, so
- *   sub-items sit flush with their parent rows — exactly like the real site.
+ * - Top-level rows carry the live site's » glyph; expanded child features do
+ *   not repeat that marker, so the 12 main features remain distinct from the
+ *   58 nested features.
  * - Tall ~46px rows with ~17px labels, single-line ellipsis.
  * - An expanded group row is highlighted with the live site's blue underline.
  * - The expand/collapse chevron stays on the far right of the row.
@@ -39,9 +40,6 @@ export function SidebarTreeItem({
   onClick,
   onToggleExpand,
 }: SidebarTreeItemProps) {
-  // The live tree keeps every level flush-left; only a small constant pad.
-  void level
-
   return (
     <div
       className={cn(
@@ -51,13 +49,15 @@ export function SidebarTreeItem({
       )}
       style={{ paddingLeft: '12px' }}
     >
-      {icon === 'book' ? (
+      {level === 0 && icon === 'book' ? (
         <BookOpen className="tree-caret h-[18px] w-[18px] shrink-0" aria-hidden />
-      ) : (
+      ) : level === 0 ? (
         <span className="tree-caret flex shrink-0 items-center text-white" aria-hidden>
           <ChevronRight className="h-4 w-4" strokeWidth={3} />
           <ChevronRight className="-ml-1 h-4 w-4" strokeWidth={3} />
         </span>
+      ) : (
+        <span className="tree-caret h-4 w-7 shrink-0" aria-hidden />
       )}
 
       <button
