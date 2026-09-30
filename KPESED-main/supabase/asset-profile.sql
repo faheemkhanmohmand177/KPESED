@@ -64,15 +64,8 @@ INSERT INTO asset_names (name, asset_type, category) VALUES
   ('OFFICE TABLE', 'FIXED/MOVABLE', 'Furniture')
 ON CONFLICT (name) DO NOTHING;
 
--- Seed the known school-admin demo record only when the school exists.
--- This mirrors the live audit's observed consumable record without importing
--- the source portal's private data set.
-INSERT INTO assets (school_id, emis_code, school_name, district, school_gender, asset_code, asset_name, asset_type, category, donated_by, purchase_date, quantity, status, availability)
-SELECT s.id, s.emis_code, s.name, COALESCE(d.name, 'MOHMAND'), s.gender, 'ASSET-66013-0001', 'FILE AND FOLDER', 'CONSUMABLE', 'Stationery', NULL, CURRENT_DATE, 1, 'FUNCTIONAL', 'AVAILABLE'
-FROM schools s
-LEFT JOIN districts d ON d.id = s.district_id
-WHERE s.emis_code = '66013'
-  AND NOT EXISTS (SELECT 1 FROM assets a WHERE a.emis_code = '66013' AND a.asset_code = 'ASSET-66013-0001');
+-- No demo asset records are seeded. Schools enter their own asset data
+-- through the Asset Profile screen.
 
 ALTER TABLE assets ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS assets_school_admin_scope ON assets;

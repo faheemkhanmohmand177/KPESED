@@ -2,7 +2,7 @@
 
 ## Scope and safety
 
-The live portal was inspected with the supplied **School Admin** account for `GMS TAJ MUHAMMAD HALIMZAI` (EMIS `66013`). The audit was read-only: no record was created, edited, deleted, saved, submitted, uploaded, downloaded, or locked. Lookup dialogs and report menus were opened only when they did not apply a change.
+The live portal was inspected with the supplied **School Admin** account for a School Admin demo account (identity redacted). The audit was read-only: no record was created, edited, deleted, saved, submitted, uploaded, downloaded, or locked. Lookup dialogs and report menus were opened only when they did not apply a change.
 
 The portal is an Oracle APEX-style Integrated EMIS application with a blue top bar, dark tree navigation, compact report regions, interactive-report Actions menus, saved reports, rows-per-page controls, horizontal scrolling, and the footer `Developed By : EMIS E&SE Department`.
 
@@ -29,8 +29,8 @@ The authenticated menu exposed these 12 top-level feature groups:
 |---|---|---|
 | Office/School MIS | School-scoped reports and navigation shell; employee/student/SSR/asset routes are reachable from the same tree | Search, saved reports, Actions, rows 1/5/10/15/20/25/50/100/1000/All, View Report, View Pivot |
 | HR MIS | Employee report returned 8 school-scoped employees; attendance is date-gated; leaves report empty; teacher attendance report showed `ORA-00904: "A"."EMP_ID": invalid identifier` | Employee tabs: Posted, Retired, Resign/Death/Shuhada/Removed/Others, Not Posted; attendance values Absent/Leave/On Duty/Present |
-| Students MIS | Student report returned 63 records for EMIS 66013; target and daily-enrolment forms expose session/year/date and target inputs; upload, promotion, migration, classes, attendance and class-update workflows are present | Student columns include identity, school, class, session, status, vaccination, disability, admission, guardian and contact fields |
-| SSR | SSR Monitoring Dashboard returned one row for EMIS 66013 with Print SSR and LOCK actions | EMIS Code, School Name, Gender, Co-Education, District, Tehsil, Level, Double Shift, Model Type, School Status, Status, Directorate, Lock Date |
+| Students MIS | Student report returned 63 records for the audited EMIS code; target and daily-enrolment forms expose session/year/date and target inputs; upload, promotion, migration, classes, attendance and class-update workflows are present | Student columns include identity, school, class, session, status, vaccination, disability, admission, guardian and contact fields |
+| SSR | SSR Monitoring Dashboard returned one row for the audited EMIS code with Print SSR and LOCK actions | EMIS Code, School Name, Gender, Co-Education, District, Tehsil, Level, Double Shift, Model Type, School Status, Status, Directorate, Lock Date |
 | Assets MIS | Asset Profile has dependent school/type/category/name lookups and Save; Asset Details returned 228 assets; Assets Report returned 51 assets across two pages | Profile columns: Serial#, Code, Name, Date, Status, Type, Category, Donated By, Availability, Delete; report columns: District, School/Office, Level, EMIS, Gender, Asset Type, Category, Asset Name, Status, Total Asset |
 | Trees survey | Interactive Grid with 31 tree rows, Edit/Save, Add Row, Reset, report Actions and editable Number of Trees Planted | Environment Friendly Tree, Trees Demand, Number of Trees Planted; observed Kikar 8 demand / 7 planted |
 | PTC MIS | Headwise balance entry grid and report/pivot views; school row total balance was 603 | Head amount columns, bank/account fields, Bank Remarks choices Active/Dormant/Inactive, report/pivot controls |
@@ -46,12 +46,12 @@ The live Asset Profile page showed:
 
 - District: `Select District` with `MOHMAND` available.
 - School Gender: `MALE`.
-- School Name: `GMS TAJ MUHAMMAD HALIMZAI`.
+- School Name: `[redacted school]`.
 - Type: `CONSUMABLE` and `FIXED/MOVABLE`.
 - Category and Asset Name dependent lookups.
 - Donated By, Purchase Date defaulting to the current date, Quantity.
 - Clear and Save controls.
-- Saved report names including `1. Primary Report` and `1. Asset record of GMS Taj mohammad`.
+- Saved report names including `1. Primary Report` and `1. Asset record of [redacted school]`.
 - Example rows including `FILE AND FOLDER`, `ATTENDANCE REGISTER STUDENTS`, `SCHOOL LEAVING CERTIFICATE FILE`, `STOCK REGISTER`, and `MARKER`.
 - Status values `FUNCTIONAL` / `NON-FUNCTIONAL` and availability `AVAILABLE`.
 

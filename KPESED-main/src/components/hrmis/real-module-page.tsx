@@ -3,13 +3,14 @@
 import * as React from 'react'
 import {
   Download, Filter, ChevronRight, Search, SlidersHorizontal, Plus, RefreshCw,
-  Trash2, Edit3, Save, RotateCcw, Table2, AlertTriangle,
+  Trash2, Edit3, Save, RotateCcw, AlertTriangle,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { MODULES } from '@/lib/modules'
 import { ROWS_PER_PAGE } from '@/lib/constants'
 import { ApexTable, type ApexTableColumn } from './ui/apex-table'
 import type { RealModuleConfig, RealFilterField } from '@/lib/real-modules'
+import { MODULE_FORMS, type FormFieldDef } from '@/lib/module-forms'
 
 type PortalRecord = { id: string; title?: string | null; data: Record<string, unknown>; updatedAt?: string }
 
@@ -20,16 +21,17 @@ interface RealModulePageProps {
 }
 
 /**
- * Faithful Oracle APEX workspace renderer driven by REAL_MODULES configs
- * captured from the live KPESED portal. Renders the exact titles, filter
- * fields, report columns, tabs, saved reports, empty-state texts and toolbar
- * buttons observed on each live page. Record data comes from the portal
- * records store (moduleKey = live page slug).
+ * Functional Oracle APEX workspace renderer driven by REAL_MODULES (visual
+ * capture) + MODULE_FORMS (data-entry capture, live 2026-09-30). Every module
+ * now supports: real Add/Create forms (exact live field labels), inline row
+ * edit, delete, CSV download, saved-report select, rows-per-page, functional
+ * filters and auto-seeded editable grids (Tree Survey, PTC headwise balance).
  */
 export function RealModulePage({ moduleKey, config, onNavigate }: RealModulePageProps) {
   const meta = MODULES[moduleKey]
   const title = config.title || meta?.title || moduleKey
   const parent = config.parent || meta?.parent || 'Main'
+  const formDef = MODULE_FORMS[moduleKey]
 
   const [records, setRecords] = React.useState<PortalRecord[]>([])
   const [loading, setLoading] = React.useState(true)
@@ -38,13 +40,22 @@ export function RealModulePage({ moduleKey, config, onNavigate }: RealModulePage
   const [pageSize, setPageSize] = React.useState('50')
   const [showActions, setShowActions] = React.useState(false)
   const [showAdd, setShowAdd] = React.useState(false)
-  const [json, setJson] = React.useState('{\n  "Name": ""\n}')
   const [tab, setTab] = React.useState(0)
   const [editing, setEditing] = React.useState(false)
   const [draft, setDraft] = React.useState<Record<string, Record<string, string>>>({})
+  const [filterValue, setFilterValue] = React.useState('')
+  const [formValues, setFormValues] = React.useState<Record<string, string>>({})
+  const [seeding, setSeeding] = React.useState(false)
+  const [savingForm, setSavingForm] = React.useState(false)
+  const [editTarget, setEditTarget] = React.useState<PortalRecord | null>(null)
 
   const isIG = config.mode === 'ig'
-  const columns = isIG ? (config.igColumns || []) : (config.columns || [])
+  // Column priority: explicit config columns/igColumns -> form-field keys
+  // (so every entry-backed module shows its own data columns in the report).
+  const formColumns = (formDef?.fields || []).map((f) => f.key)
+  const columns = isIG
+    ? (config.igColumns?.length ? config.igColumns : formColumns)
+    : (config.columns?.length ? config.columns : formColumns)
 
   const load = React.useCallback(async () => {
     setLoading(true)
@@ -59,11 +70,36 @@ export function RealModulePage({ moduleKey, config, onNavigate }: RealModulePage
 
   React.useEffect(() => { void load() }, [load])
 
+  // Auto-seed default grid rows the first time a seedable module is opened
+  // (matches the live portal where Survey Trees / PTC heads arrive pre-filled).
+  React.useEffect(() => {
+    if (!formDef?.seedRows?.length || loading || seeding) return
+    if (records.length > 0) return
+    setSeeding(true)
+    ;(async () => {
+      try {
+        await fetch('/api/portal-records/seed-defaults', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ moduleKey, rows: formDef.seedRows }),
+        })
+        await load()
+      } catch { /* non-fatal */ }
+      finally { setSeeding(false) }
+    })()
+  }, [formDef, records.length, loading, seeding, moduleKey, load])
+
   const filtered = React.useMemo(() => {
-    if (!appliedSearch) return records
-    const q = appliedSearch.toLowerCase()
-    return records.filter((r) => JSON.stringify(r.data).toLowerCase().includes(q) || (r.title || '').toLowerCase().includes(q))
-  }, [records, appliedSearch])
+    let out = records
+    if (appliedSearch) {
+      const q = appliedSearch.toLowerCase()
+      out = out.filter((r) => JSON.stringify(r.data).toLowerCase().includes(q) || (r.title || '').toLowerCase().includes(q))
+    }
+    if (formDef?.functionalFilter && filterValue) {
+      out = out.filter((r) => String(r.data?.[formDef.functionalFilter!.key] ?? '').includes(filterValue))
+    }
+    return out
+  }, [records, appliedSearch, formDef, filterValue])
 
   const visible = pageSize === 'All' ? filtered : filtered.slice(0, Number(pageSize) || 50)
 
@@ -85,19 +121,49 @@ export function RealModulePage({ moduleKey, config, onNavigate }: RealModulePage
     URL.revokeObjectURL(url)
   }
 
-  async function addRecord(e: React.FormEvent) {
+  function openAddForm() {
+    const init: Record<string, string> = {}
+    for (const f of formDef?.fields || []) init[f.key] = f.defaultValue ?? ''
+    setFormValues(init)
+    setEditTarget(null)
+    setShowAdd(true)
+  }
+
+  function openEditForm(row: PortalRecord) {
+    const init: Record<string, string> = {}
+    for (const f of formDef?.fields || []) init[f.key] = String(row.data?.[f.key] ?? '')
+    setFormValues(init)
+    setEditTarget(row)
+    setShowAdd(true)
+  }
+
+  async function submitForm(e: React.FormEvent) {
     e.preventDefault()
-    let data: Record<string, unknown>
-    try { data = JSON.parse(json) } catch { toast.error('Enter valid JSON object data.'); return }
-    const response = await fetch('/api/portal-records', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ moduleKey, data }),
-    })
-    if (!response.ok) { toast.error('Unable to save this record.'); return }
-    toast.success('Record added.')
-    setShowAdd(false)
-    setJson('{\n  "Name": ""\n}')
-    await load()
+    setSavingForm(true)
+    try {
+      if (editTarget) {
+        const payload: Record<string, unknown> = { ...editTarget.data }
+        for (const f of formDef?.fields || []) payload[f.key] = formValues[f.key] ?? ''
+        const response = await fetch(`/api/portal-records/${encodeURIComponent(editTarget.id)}`, {
+          method: 'PATCH', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ data: payload }),
+        })
+        if (!response.ok) { toast.error('Unable to update this record.'); return }
+        toast.success('Record updated.')
+      } else {
+        const response = await fetch('/api/portal-records', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ moduleKey, data: formValues }),
+        })
+        if (!response.ok) { toast.error('Unable to save this record.'); return }
+        toast.success('Record saved.')
+      }
+      setShowAdd(false)
+      setEditTarget(null)
+      await load()
+    } finally {
+      setSavingForm(false)
+    }
   }
 
   async function removeRecord(id: string) {
@@ -106,7 +172,7 @@ export function RealModulePage({ moduleKey, config, onNavigate }: RealModulePage
     if (response.ok) { toast.success('Record deleted.'); await load() } else toast.error('Unable to delete this record.')
   }
 
-  // ----- IG editing -----
+  // ----- IG / inline grid editing -----
   function startEdit() {
     const d: Record<string, Record<string, string>> = {}
     for (const row of visible) {
@@ -214,30 +280,6 @@ export function RealModulePage({ moduleKey, config, onNavigate }: RealModulePage
     )
   }
 
-  // ----- Monitoring Dashboard charts -----
-  if (config.mode === 'charts') {
-    return (
-      <div className="t-Body-contentInner">
-        <Breadcrumb parent={parent} title={title} onNavigate={onNavigate} />
-        <div className="grid gap-3 lg:grid-cols-2">
-          {(config.charts || []).map((chart) => (
-            <section key={chart} className="apex-region" aria-label={chart}>
-              <div className="apex-region-header min-h-[34px]">
-                <span className="text-xs font-semibold text-[#333]">{chart}</span>
-                <span className="flex gap-1.5"><button type="button" className="apex-btn">Stack</button><button type="button" className="apex-btn">Unstack</button></span>
-              </div>
-              <div className="apex-region-body flex h-[220px] items-end justify-around gap-2 px-4 pb-3">
-                <div className="flex h-full w-full flex-col items-center justify-center text-center text-xs text-gray-400">
-                  No chart data available for this district yet.
-                </div>
-              </div>
-            </section>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
   // ----- Student Migration lookup form -----
   if (config.mode === 'form') {
     return (
@@ -258,44 +300,6 @@ export function RealModulePage({ moduleKey, config, onNavigate }: RealModulePage
     )
   }
 
-  // ----- Attachments page (DPS - Rankings) -----
-  if (config.mode === 'attachments') {
-    const rows = config.rows || []
-    return (
-      <div className="t-Body-contentInner">
-        <Breadcrumb parent={parent} title={title} onNavigate={onNavigate} />
-        <h1 className="mb-2 text-base font-semibold text-[#333] sm:text-lg">{title}</h1>
-        <section className="apex-region" aria-label={title}>
-          <div className="apex-region-header min-h-[34px]"><span className="flex items-center gap-2"><Filter className="h-3.5 w-3.5 text-gray-500" />{title}</span><span className="flex gap-1.5"><button type="button" className="apex-btn"><SlidersHorizontal className="h-3.5 w-3.5" /><span className="hidden sm:inline">Actions</span></button></span></div>
-          <div className="apex-region-body">
-            <div role="search" className="mb-2 flex flex-wrap items-end gap-2">
-              <button type="button" className="apex-btn">Select columns to search</button>
-              <div className="min-w-[160px] flex-1"><label className="apex-form-label">Search</label><input type="search" className="apex-input" placeholder="Search…" /></div>
-              <button type="button" className="apex-btn apex-btn--primary"><Search className="h-3.5 w-3.5" />Go</button>
-            </div>
-            {rows.length === 0 ? (
-              <div className="py-8 text-center text-sm text-gray-500">No data found.</div>
-            ) : (
-              <ApexTable
-                columns={[
-                  { key: '_title', label: 'Title', sortable: true },
-                  { key: '_att', label: 'Attachment', headerAlign: 'center', render: () => (
-                    <button type="button" className="inline-flex items-center gap-1 text-[#1565c0] hover:underline" onClick={() => toast.info('Attachment preview is not included in this clone.')}>
-                      <Download className="h-3 w-3" /> Download
-                    </button>
-                  ) },
-                ]}
-                rows={rows.map((r) => ({ _id: r.Title, _title: r.Title, _att: 'Download' }))}
-                emptyText="No data found."
-              />
-            )}
-          </div>
-        </section>
-      </div>
-    )
-  }
-
-  // ----- IRR / IG workspace -----
   const tableColumns: ApexTableColumn[] = [
     ...columns.map((col) => ({
       key: col,
@@ -305,7 +309,8 @@ export function RealModulePage({ moduleKey, config, onNavigate }: RealModulePage
       render: editing
         ? (row: Record<string, unknown>) => {
             const value = draft[row._id as string]?.[col] ?? ''
-            if (config.bankRemarksOptions && col === 'Bank Remakrs') {
+            const selectOptions = formDef?.gridSelectCols?.[col]
+            if (selectOptions) {
               return (
                 <select
                   className="apex-select w-full min-w-[90px]"
@@ -313,7 +318,7 @@ export function RealModulePage({ moduleKey, config, onNavigate }: RealModulePage
                   onChange={(e) => setDraft((prev) => ({ ...prev, [row._id as string]: { ...prev[row._id as string], [col]: e.target.value } }))}
                 >
                   <option value=""></option>
-                  {config.bankRemarksOptions.map((o) => <option key={o}>{o}</option>)}
+                  {selectOptions.map((o) => <option key={o}>{o}</option>)}
                 </select>
               )
             }
@@ -328,9 +333,14 @@ export function RealModulePage({ moduleKey, config, onNavigate }: RealModulePage
         : undefined,
     })),
     { key: '_updated', label: 'Updated' },
-    ...(config.mode === 'irr' ? [{ key: '_del', label: '', headerAlign: 'center' as const, render: (row: Record<string, unknown>) => (
-      <button type="button" title="Delete record" className="text-red-600 hover:text-red-800" onClick={(e) => { e.stopPropagation(); void removeRecord(String(row._id)) }}><Trash2 className="h-3.5 w-3.5" /></button>
-    ) }] : []),
+    ...(editing ? [] : [
+      ...(formDef ? [{ key: '_edit', label: '', headerAlign: 'center' as const, render: (row: Record<string, unknown>) => (
+        <button type="button" title="Edit record" className="text-[#1565c0] hover:text-[#0b4f96]" onClick={(e) => { e.stopPropagation(); openEditForm(records.find((r) => r.id === row._id)!) }}><Edit3 className="h-3.5 w-3.5" /></button>
+      ) }] : []),
+      { key: '_del', label: '', headerAlign: 'center' as const, render: (row: Record<string, unknown>) => (
+        <button type="button" title="Delete record" className="text-red-600 hover:text-red-800" onClick={(e) => { e.stopPropagation(); void removeRecord(String(row._id)) }}><Trash2 className="h-3.5 w-3.5" /></button>
+      ) },
+    ]),
   ]
 
   const tableRows = visible.map((row) => ({
@@ -373,20 +383,26 @@ export function RealModulePage({ moduleKey, config, onNavigate }: RealModulePage
       <section className="apex-region" aria-label={title}>
         <div className="apex-region-header min-h-[34px]">
           <span className="flex items-center gap-2"><Filter className="h-3.5 w-3.5 text-gray-500" />{isIG && hasTabbedIG ? config.tabs?.[tab] || title : title}</span>
-          <span className="flex gap-1.5">
+          <span className="flex flex-wrap gap-1.5">
             <button type="button" className="apex-btn" onClick={downloadCsv} title="Download CSV"><Download className="h-3.5 w-3.5" /><span className="hidden sm:inline">Download</span></button>
             {isIG && !editing && <button type="button" className="apex-btn" onClick={startEdit}><Edit3 className="h-3.5 w-3.5" /><span className="hidden sm:inline">Edit</span></button>}
             {isIG && editing && <button type="button" className="apex-btn apex-btn--primary" onClick={() => void saveGrid()}><Save className="h-3.5 w-3.5" /><span className="hidden sm:inline">Save</span></button>}
             {isIG && editing && <button type="button" className="apex-btn" onClick={() => void addGridRow()}><Plus className="h-3.5 w-3.5" /><span className="hidden sm:inline">Add Row</span></button>}
             {isIG && editing && <button type="button" className="apex-btn" onClick={() => { setEditing(false); void load() }}><RotateCcw className="h-3.5 w-3.5" /><span className="hidden sm:inline">Reset</span></button>}
+            {formDef && !editing && (
+              <button type="button" className="apex-btn apex-btn--primary" onClick={openAddForm}>
+                <Plus className="h-3.5 w-3.5" /><span>{formDef.createLabel}</span>
+              </button>
+            )}
             <button type="button" className="apex-btn" onClick={() => setShowActions((v) => !v)}><SlidersHorizontal className="h-3.5 w-3.5" /><span className="hidden sm:inline">Actions</span></button>
           </span>
         </div>
 
         {showActions && (
           <div className="flex flex-wrap gap-2 border-b border-[#e5e5e5] bg-[#fafafa] px-3 py-2">
-            <button type="button" className="apex-btn" onClick={() => setShowAdd(true)}><Plus className="h-3.5 w-3.5" />Add Record</button>
+            {formDef && <button type="button" className="apex-btn" onClick={openAddForm}><Plus className="h-3.5 w-3.5" />{formDef.createLabel}</button>}
             <button type="button" className="apex-btn" onClick={() => void load()}><RefreshCw className="h-3.5 w-3.5" />Refresh</button>
+            <button type="button" className="apex-btn" onClick={downloadCsv}><Download className="h-3.5 w-3.5" />Download (CSV)</button>
           </div>
         )}
 
@@ -394,6 +410,34 @@ export function RealModulePage({ moduleKey, config, onNavigate }: RealModulePage
           {(config.filters || []).length > 0 && (
             <div className="mb-3 flex flex-wrap items-end gap-3 rounded border border-[#e5e5e5] bg-[#fafafa] p-3">
               {(config.filters || []).map((f, i) => renderFilterField(f, i))}
+            </div>
+          )}
+
+          {formDef?.functionalFilter && (
+            <div className="mb-3 flex flex-wrap items-end gap-3 rounded border border-[#e5e5e5] bg-[#fafafa] p-3">
+              {formDef.functionalFilter.kind === 'date' ? (
+                <div>
+                  <label className="apex-form-label" htmlFor={`${moduleKey}-fnfilter`}>{formDef.functionalFilter.label}</label>
+                  <input
+                    id={`${moduleKey}-fnfilter`} type="date" className="apex-input min-w-[140px]" value={filterValue}
+                    onChange={(e) => setFilterValue(e.target.value)}
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label className="apex-form-label" htmlFor={`${moduleKey}-fnfilter`}>{formDef.functionalFilter.label}</label>
+                  <select
+                    id={`${moduleKey}-fnfilter`} className="apex-select min-w-[170px]" value={filterValue}
+                    onChange={(e) => setFilterValue(e.target.value)}
+                  >
+                    <option value="">-- {formDef.functionalFilter.label} --</option>
+                    {(formDef.functionalFilter.options || []).map((o) => <option key={o}>{o}</option>)}
+                  </select>
+                </div>
+              )}
+              {filterValue && (
+                <button type="button" className="apex-btn" onClick={() => setFilterValue('')}>Clear Filter</button>
+              )}
             </div>
           )}
 
@@ -433,6 +477,14 @@ export function RealModulePage({ moduleKey, config, onNavigate }: RealModulePage
                   </div>
                 </section>
               ))}
+              {formDef && (
+                <section className="apex-region" aria-label={`${title} Records`}>
+                  <div className="apex-region-header min-h-[30px]"><span className="text-xs font-semibold text-[#333]">{title} — Saved Records</span></div>
+                  <div className="apex-region-body">
+                    <ApexTable columns={tableColumns} rows={tableRows} emptyText={config.empty || `${title} Data Not Found …!`} maxHeight="50vh" />
+                  </div>
+                </section>
+              )}
             </div>
           ) : (
             <ApexTable
@@ -445,21 +497,72 @@ export function RealModulePage({ moduleKey, config, onNavigate }: RealModulePage
         </div>
       </section>
 
-      {showAdd && (
+      {showAdd && formDef && (
         <div className="fixed inset-0 z-[60] grid place-items-center bg-black/35 p-4">
-          <form onSubmit={addRecord} className="w-full max-w-xl rounded border border-gray-300 bg-white p-4 shadow-xl">
-            <div className="mb-3 flex items-center justify-between"><h2 className="font-semibold">Add {title} record</h2><button type="button" onClick={() => setShowAdd(false)} className="text-xl">×</button></div>
-            <label className="apex-form-label">Record data (JSON)
-              <textarea value={json} onChange={(e) => setJson(e.target.value)} className="mt-1 min-h-[180px] w-full rounded border border-[#ccc] p-2 font-mono text-xs" />
-            </label>
-            <p className="mt-2 text-xs text-gray-500">Tip: keys must match the report column labels exactly (e.g. {JSON.stringify(columns[0] || 'Name')}).</p>
-            <div className="mt-3 flex justify-end gap-2">
-              <button type="button" className="apex-btn" onClick={() => setShowAdd(false)}>Cancel</button>
-              <button type="submit" className="apex-btn apex-btn--primary">Save Record</button>
+          <form onSubmit={submitForm} className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded border border-gray-300 bg-white p-4 shadow-xl">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="font-semibold">{editTarget ? `Update — ${formDef.formTitle || formDef.createLabel}` : formDef.formTitle || formDef.createLabel}</h2>
+              <button type="button" onClick={() => { setShowAdd(false); setEditTarget(null) }} className="text-xl text-gray-500">×</button>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {formDef.fields.map((f) => <FormInput key={f.key} field={f} value={formValues[f.key] ?? ''} onChange={(v) => setFormValues((prev) => ({ ...prev, [f.key]: v }))} />)}
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" className="apex-btn" onClick={() => { setShowAdd(false); setEditTarget(null) }}>Cancel</button>
+              <button type="submit" className="apex-btn apex-btn--primary" disabled={savingForm}>{savingForm ? 'Saving…' : (formDef.submitLabel || 'Save Record')}</button>
             </div>
           </form>
         </div>
       )}
+    </div>
+  )
+}
+
+function FormInput({ field, value, onChange }: { field: FormFieldDef; value: string; onChange: (v: string) => void }) {
+  const id = `mf-${field.key.replace(/[^a-zA-Z0-9]/g, '-')}`
+  const label = (
+    <label className="apex-form-label" htmlFor={id}>
+      {field.label}{field.required ? ' *' : ''}
+    </label>
+  )
+  if (field.type === 'select') {
+    return (
+      <div className={field.full ? 'sm:col-span-2 lg:col-span-3' : ''}>
+        {label}
+        <select id={id} className="apex-select w-full" value={value} onChange={(e) => onChange(e.target.value)} required={field.required}>
+          <option value="">-- {field.label} --</option>
+          {(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}
+        </select>
+      </div>
+    )
+  }
+  if (field.type === 'radio') {
+    return (
+      <div className={field.full ? 'sm:col-span-2 lg:col-span-3' : ''}>
+        <span className="apex-form-label">{field.label}{field.required ? ' *' : ''}</span>
+        <div className="mt-1 flex gap-4">
+          {(field.options || []).map((o) => (
+            <label key={o} className="flex items-center gap-1.5 text-xs text-gray-700">
+              <input type="radio" name={id} checked={value === o} onChange={() => onChange(o)} /> {o}
+            </label>
+          ))}
+        </div>
+      </div>
+    )
+  }
+  if (field.type === 'textarea') {
+    return (
+      <div className="sm:col-span-2 lg:col-span-3">
+        {label}
+        <textarea id={id} className="mt-1 min-h-[64px] w-full rounded border border-[#ccc] p-2 text-sm" value={value} onChange={(e) => onChange(e.target.value)} required={field.required} />
+      </div>
+    )
+  }
+  const inputType = field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : field.type === 'url' ? 'url' : 'text'
+  return (
+    <div className={field.full ? 'sm:col-span-2 lg:col-span-3' : ''}>
+      {label}
+      <input id={id} type={inputType} className="apex-input w-full" value={value} onChange={(e) => onChange(e.target.value)} required={field.required} />
     </div>
   )
 }
@@ -488,6 +591,3 @@ function ApexTabs({ tabs, tab, onTab }: { tabs: string[]; tab: number; onTab: (i
     </div>
   )
 }
-
-// Table2 icon kept for future pivot view (live page offers Pivot on PTC report tab).
-export const __UNUSED = Table2

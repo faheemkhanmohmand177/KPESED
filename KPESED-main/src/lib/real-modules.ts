@@ -121,6 +121,7 @@ export const REAL_MODULES: Record<string, RealModuleConfig> = {
     title: "Content for Social Media",
     mode: "irr",
     tabs: ["Content Received"],
+    columns: ["Content Title", "Content Type", "Content Date", "Description", "Content Link", "Status", "Remarks"],
     empty: "No data found.",
     actions: ["Create"],
   },
@@ -158,7 +159,6 @@ export const REAL_MODULES: Record<string, RealModuleConfig> = {
     title: "DPS - iEMIS Updation (Enrollment - Comparison b/w Class-wise Entry and Profiles) - 5 Marks",
     mode: "irr",
     empty: "No data found.",
-    displayVals: ["MOHMAND", "MALE"],
   },
   "dps-iemis-updation-human-resource-mis": {
     key: "dps-iemis-updation-human-resource-mis",
@@ -166,7 +166,6 @@ export const REAL_MODULES: Record<string, RealModuleConfig> = {
     title: "DPS - iEMIS Updation (Human Resource MIS) - 10 Marks",
     mode: "irr",
     empty: "No data found.",
-    displayVals: ["MOHMAND", "MALE"],
   },
   "dps-iemis-updation-osmis": {
     key: "dps-iemis-updation-osmis",
@@ -174,7 +173,6 @@ export const REAL_MODULES: Record<string, RealModuleConfig> = {
     title: "DPS - iEMIS Updation (Office-School MIS) - 10 Marks",
     mode: "irr",
     empty: "No data found.",
-    displayVals: ["MOHMAND", "MALE"],
   },
   "dps-rankings": {
     key: "dps-rankings",
@@ -467,9 +465,9 @@ export const REAL_MODULES: Record<string, RealModuleConfig> = {
     mode: "form",
     tabs: ["Student", "Profile", "Family Detail", "Classes Detail", "View Certificate List"],
     formFields: [
-      { label: "District", kind: "text", value: "MOHMAND" },
-      { label: "School Gender", kind: "text", value: "MALE" },
-      { label: "Select School", kind: "text", value: "GMS TAJ MUHAMMAD HALIMZAI" },
+      { label: "District", kind: "text", value: "" },
+      { label: "School Gender", kind: "text", value: "" },
+      { label: "Select School", kind: "text", value: "" },
       { label: "Co-Education", kind: "readonly", value: "" },
       { label: "Student ID", kind: "text", value: "" },
       { label: "Student Name", kind: "readonly", value: "" },
@@ -486,7 +484,6 @@ export const REAL_MODULES: Record<string, RealModuleConfig> = {
     mode: "ig",
     igColumns: ["Environment Friendly Tree", "Trees Demand", "Number of Trees Planted"],
     empty: "No data found",
-    displayVals: ["GMS TAJ MUHAMMAD HALIMZAI"],
   },
   "teacher-attendance-report": {
     key: "teacher-attendance-report",

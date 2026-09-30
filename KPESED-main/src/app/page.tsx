@@ -16,6 +16,9 @@ import { ErrorPage } from '@/components/hrmis/error-page'
 import { StudentsMisPage } from '@/components/hrmis/students-mis-page'
 import { AssetMisPage } from '@/components/hrmis/asset-mis-page'
 import { RealModulePage } from '@/components/hrmis/real-module-page'
+import { StudentAttendancePage } from '@/components/hrmis/student-attendance-page'
+import { StudentPromotionPage } from '@/components/hrmis/student-promotion-page'
+import { MonitoringDashboardPage } from '@/components/hrmis/monitoring-dashboard-page'
 import { REAL_MODULES } from '@/lib/real-modules'
 import { resolveModuleKey } from '@/lib/portal-navigation'
 import { Suspense } from 'react'
@@ -146,6 +149,14 @@ function PageInner() {
       case 'students-class_update':
       case 'students-class-update':
         return <StudentsMisPage module="students-class-update" title="Students Class Update" onNavigate={navigate} />
+      case 'student-attendence':
+        return <StudentAttendancePage onNavigate={navigate} />
+      case 'student-class-promotion':
+        return <StudentPromotionPage onNavigate={navigate} />
+      case 'student-class-promotion-double-shift':
+        return <StudentPromotionPage doubleShift onNavigate={navigate} />
+      case 'monitoring-dashboard':
+        return <MonitoringDashboardPage onNavigate={navigate} />
       case 'asset-profile':
         return <AssetMisPage view="profile" onNavigate={navigate} />
       case 'assets-detail':

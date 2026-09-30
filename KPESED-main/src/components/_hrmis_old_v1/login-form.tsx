@@ -114,7 +114,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-center">
               <p className="text-xs text-amber-800">
-                <strong>Demo credentials:</strong> admin / admin123456
+                <strong>Note:</strong> ask the administrator for an account
               </p>
             </div>
           </form>

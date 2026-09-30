@@ -32,6 +32,8 @@ model User {
   notifications     Notification[]
   portalRecords     PortalRecord[]
   assetsCreated     Asset[]
+  studentAttendancesMarked StudentAttendance[]
+  studentPromotionsCreated StudentPromotion[]
 
   @@map("users")
 }
@@ -592,4 +594,55 @@ model StudentClassUpdate {
   createdAt   DateTime @default(now()) @map("created_at")
   @@index([emisCode])
   @@map("student_class_updates")
+}
+
+model StudentAttendance {
+  id        String   @id @default(uuid())
+  emisCode  String   @map("emis_code")
+  studentId String   @map("student_id")
+  studentName String? @map("student_name")
+  className String?  @map("class_name")
+  section   String?
+  session   String?
+  shift     String?  @default("S")
+  attendanceDate DateTime @map("attendance_date")
+  status    String   @default("Present")
+  remarks   String?
+  markedById String? @map("marked_by")
+  markedBy  User?    @relation(fields: [markedById], references: [id])
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([emisCode, studentId, attendanceDate, shift])
+  @@index([emisCode, attendanceDate])
+  @@map("student_attendance")
+}
+
+model StudentPromotion {
+  id            String   @id @default(uuid())
+  emisCode      String   @map("emis_code")
+  studentId     String   @map("student_id")
+  studentName   String?  @map("student_name")
+  fatherName    String?  @map("father_name")
+  gender        String?
+  fatherCnic    String?  @map("father_cnic")
+  fromClass     String?  @map("from_class")
+  toClass       String?  @map("to_class")
+  classSection  String?  @map("class_section")
+  admissionNo   String?  @map("admission_no")
+  newAdmissionNo String? @map("new_admission_no")
+  certificateIssue String? @map("certificate_issue")
+  session       String?
+  shift         String?  @default("S")
+  status        String?  @default("PROMOTED")
+  promotedDate  DateTime? @map("promoted_date")
+  remarks       String?
+  createdById   String?  @map("created_by")
+  createdBy     User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@unique([emisCode, studentId, session, shift])
+  @@index([emisCode])
+  @@map("student_promotions")
 }

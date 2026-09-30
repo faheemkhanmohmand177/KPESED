@@ -51,7 +51,7 @@ psql "$DATABASE_URL" -f supabase/portal-navigation.sql
 psql "$DATABASE_URL" -f supabase/asset-profile.sql
 ```
 
-The asset migration creates lookup tables and the `assets` table, seeds lookup values, and inserts one representative EMIS `66013` record only when that school already exists. It does not import the source portal's private dataset.
+The asset migration creates lookup tables and the `assets` table and seeds lookup values. No demo records are seeded — schools enter their own asset data.
 
 See [`docs/kpese-live-audit-2026-09-29.md`](docs/kpese-live-audit-2026-09-29.md) for the read-only KPESED feature audit, observed fields and controls, implementation scope, and limitations.
 
@@ -132,6 +132,10 @@ Run the SQL files in this order:
 
 1. `supabase/schema.sql`
 2. `supabase/portal-navigation.sql`
+3. `supabase/students-mis.sql`
+4. `supabase/asset-profile.sql`
+5. `supabase/twin-sync-2026-09-29.sql`
+6. `supabase/twin-functional-2026-09-30.sql` (student attendance + promotion tables)
 
 ### Updating an existing deployment (twin sync)
 
@@ -159,6 +163,30 @@ attachment list. Record data itself is **not** copied from the source portal;
 school admins enter their own data through the same screens.
 
 The base schema starts with reference districts/designations and an unscoped Admin; schools and employees are added by the Admin through the portal.
+
+### Functional data entry for every module (2026-09-30 twin upgrade)
+
+Every one of the 12 top-level groups and 58 leaf features now supports the
+same entry workflows observed on the live portal:
+
+- **Real Add/Create forms** — the toolbar button uses the live label
+  (`Create`, `Add Schools`, `Add School`, `Add Dengue Control Campaign`,
+  `Add Applicant`, `Add Row`, …) and opens a form with the live field labels,
+  select options and required marks (see `src/lib/module-forms.ts`).
+- **Inline row edit + delete** on every report workspace.
+- **Auto-seeded editable grids** — Survey - Environment Friendly Trees Form
+  arrives with the 31 tree-species rows; PTC HEADWISE AVAILABLE AMOUNT arrives
+  with the school fund-heads row (Bank Remarks: Active/Dormant/Inactive).
+- **Dedicated functional screens** — Student Attendance
+  (Absent/Leave/Present/Sick Leave per date + shift), Student Class Promotion
+  (manual + double shift with To Class/Section/Certificate Issue), Monitoring
+  Dashboard (four ASC vs iEMIS charts backed by live counts), Student
+  Migration lookup, and the CSV Student Data Uploading importer.
+- **Functional filters** — Session Year / SSR Session Year / date filters
+  actually filter the stored records, and CSV download exports them.
+- Backing store: the generic `portal_records` table plus two new tables,
+  `student_attendance` and `student_promotions`
+  (`supabase/twin-functional-2026-09-30.sql`, idempotent and additive).
 
 ## Main API routes
 
